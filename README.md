@@ -3,6 +3,10 @@ go-paypercall
 
 Go middleware for monetizing your API on a pay-per-call basis with Bitcoin and Lightning ⚡️
 
+We're first focusing on `net/http`-compatible middleware and later adding middleware for [Gin](https://github.com/gin-gonic/gin), [Echo](https://github.com/labstack/echo) and other popular Go web frameworks.
+
+An API gateway is on the roadmap as well, which you can use to monetize your API that's written in *any* language, so no need to use Go.
+
 Prior Art
 ---------
 
