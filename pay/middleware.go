@@ -5,6 +5,7 @@ import (
 )
 
 // NewMiddleware returns a function which you can use within an http.HandlerFunc chain.
+// The parameter is the amount of satoshis you want to have paid for one API call.
 func NewMiddleware(amount int64) func(http.HandlerFunc) http.HandlerFunc {
 	return func(next http.HandlerFunc) http.HandlerFunc {
 		return func(w http.ResponseWriter, r *http.Request) {
@@ -15,7 +16,8 @@ func NewMiddleware(amount int64) func(http.HandlerFunc) http.HandlerFunc {
 				w.Header().Set("Content-Type", "application/vnd.lightning.bolt11")
 				w.WriteHeader(http.StatusPaymentRequired)
 				// The actual invoice goes into the body
-				w.Write([]byte("not implemented")) // TODO: implement
+				invoice := generateInvoice(amount)
+				w.Write([]byte(invoice))
 			} else {
 				// Get the token and check if the payment is OK
 				ok := checkToken(token)
@@ -27,4 +29,12 @@ func NewMiddleware(amount int64) func(http.HandlerFunc) http.HandlerFunc {
 			}
 		}
 	}
+}
+
+func generateInvoice(amount int64) string {
+	return "not implemented" // TODO: implement
+}
+
+func checkToken(token string) bool {
+	return false // TODO: implement
 }
