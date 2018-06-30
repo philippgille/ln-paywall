@@ -49,7 +49,7 @@ func main() {
 	satoshis := int64(1)
 	address := "123.123.123.123:10009"
 	// Create function that we can use in the middleware chain
-	withPayment := pay.NewMiddleware(satoshis, address, certFile, macaroonFile)
+	withPayment := pay.NewHandlerFuncMiddleware(satoshis, address, certFile, macaroonFile)
 
 	// Use a chain of middlewares for the "/ping" endpoint
 	http.HandleFunc("/ping", withLogging(withPayment(pongHandler)))
