@@ -1,6 +1,8 @@
 go-paypercall
 =============
 
+[![Go Report Card](https://goreportcard.com/badge/github.com/philippgille/go-paypercall)](https://goreportcard.com/report/github.com/philippgille/go-paypercall)
+
 Go middleware for monetizing your API on a pay-per-call basis with Bitcoin and Lightning ⚡️
 
 We're first focusing on `net/http`-compatible middleware and later adding middleware for [Gin](https://github.com/gin-gonic/gin), [Echo](https://github.com/labstack/echo) and other popular Go web frameworks.
