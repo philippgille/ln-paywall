@@ -4,11 +4,15 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 
 	"github.com/philippgille/go-paypercall/ln"
 )
 
-// NewMiddleware returns a function which you can use within an http.HandlerFunc chain.
+// stdOutLogger logs to stdout, while the default log package loggers log to stderr.
+var stdOutLogger = log.New(os.Stdout, "", log.LstdFlags)
+
+// NewHandlerFuncMiddleware returns a function which you can use within an http.HandlerFunc chain.
 // The amount parameter is the amount of satoshis you want to have paid for one API call.
 // The address parameter is the address of your LND node, including the port.
 // The certFile parameter is the path to the "tls.cert" file that your LND node uses.
@@ -26,6 +30,7 @@ func NewHandlerFuncMiddleware(amount int64, address string, certFile string, mac
 					log.Println(errorMsg)
 					http.Error(w, errorMsg, http.StatusBadRequest)
 				} else {
+					stdOutLogger.Printf("Sending invoice in response: %v", invoice)
 					// Note: w.Header().Set(...) must be called before w.WriteHeader(...)!
 					w.Header().Set("Content-Type", "application/vnd.lightning.bolt11")
 					w.WriteHeader(http.StatusPaymentRequired)
@@ -44,6 +49,10 @@ func NewHandlerFuncMiddleware(amount int64, address string, certFile string, mac
 						log.Printf("The provided preimage is invalid: %v\n", preimage)
 						http.Error(w, "The provided preimage is invalid", http.StatusBadRequest)
 					} else {
+						preimageHash, err := ln.HashPreimage(preimage)
+						if err == nil {
+							stdOutLogger.Printf("The provided preimage is valid. Continuing to the next HandlerFunc. Preimage hash: %v\n", preimageHash)
+						}
 						next.ServeHTTP(w, r)
 					}
 				}
