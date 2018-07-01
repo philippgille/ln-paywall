@@ -14,35 +14,48 @@ import (
 // stdOutLogger logs to stdout, while the default log package loggers log to stderr.
 var stdOutLogger = log.New(os.Stdout, "", log.LstdFlags)
 
+// InvoiceOptions are the options for an invoice.
+type InvoiceOptions struct {
+	// Amount of Satoshis you want to have paid for one API call
+	Amount int64
+	// Note to be shown on the invoice,
+	// for example: "API call to api.example.com".
+	// Optional ("API call" by default)
+	Memo string
+}
+
+// LNDoptions are the options for the connection to the lnd node.
+type LNDoptions struct {
+	// Address of your LND node, including the port
+	Address string
+	// Path to the "tls.cert" file that your LND node uses
+	CertFile string
+	// Path to the "invoice.macaroon" file that your LND node uses
+	MacaroonFile string
+}
+
 // NewHandlerFuncMiddleware returns a function which you can use within an http.HandlerFunc chain.
-// The amount parameter is the amount of satoshis you want to have paid for one API call.
-// The address parameter is the address of your LND node, including the port.
-// The certFile parameter is the path to the "tls.cert" file that your LND node uses.
-// The macaroonFile parameter is the path to the "admin.macaroon" file that your LND node uses.
-func NewHandlerFuncMiddleware(amount int64, address string, certFile string, macaroonFile string) func(http.HandlerFunc) http.HandlerFunc {
+func NewHandlerFuncMiddleware(invoiceOptions InvoiceOptions, lndOptions LNDoptions) func(http.HandlerFunc) http.HandlerFunc {
 	return func(next http.HandlerFunc) http.HandlerFunc {
-		return createHandlerFunc(amount, address, certFile, macaroonFile, next)
+		return createHandlerFunc(invoiceOptions, lndOptions, next)
 	}
 }
 
 // NewHandlerMiddleware returns a function which you can use within an http.Handler chain.
-// The amount parameter is the amount of satoshis you want to have paid for one API call.
-// The address parameter is the address of your LND node, including the port.
-// The certFile parameter is the path to the "tls.cert" file that your LND node uses.
-// The macaroonFile parameter is the path to the "admin.macaroon" file that your LND node uses.
-func NewHandlerMiddleware(amount int64, address string, certFile string, macaroonFile string) func(http.Handler) http.Handler {
+func NewHandlerMiddleware(invoiceOptions InvoiceOptions, lndOptions LNDoptions) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
-		return http.HandlerFunc(createHandlerFunc(amount, address, certFile, macaroonFile, next.ServeHTTP))
+		return http.HandlerFunc(createHandlerFunc(invoiceOptions, lndOptions, next.ServeHTTP))
 	}
 }
 
-func createHandlerFunc(amount int64, address string, certFile string, macaroonFile string, next http.HandlerFunc) func(w http.ResponseWriter, r *http.Request) {
+func createHandlerFunc(invoiceOptions InvoiceOptions, lndOptions LNDoptions, next http.HandlerFunc) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// Check if the request contains a header with the preimage that we need to check if the requester paid
 		preimage := r.Header.Get("x-preimage")
 		if preimage == "" {
 			// Generate the invoice
-			invoice, err := ln.GenerateInvoice(amount, address, certFile, macaroonFile)
+			invoice, err := ln.GenerateInvoice(invoiceOptions.Amount, invoiceOptions.Memo,
+				lndOptions.Address, lndOptions.CertFile, lndOptions.MacaroonFile)
 			if err != nil {
 				errorMsg := fmt.Sprintf("Couldn't generate invoice: %+v", err)
 				log.Println(errorMsg)
@@ -57,7 +70,7 @@ func createHandlerFunc(amount int64, address string, certFile string, macaroonFi
 			}
 		} else {
 			// Check if the provided preimage belongs to a settled API payment invoice and that it wasn't already used
-			ok, err := ln.CheckPreimage(preimage, address, certFile, macaroonFile)
+			ok, err := ln.CheckPreimage(preimage, lndOptions.Address, lndOptions.CertFile, lndOptions.MacaroonFile)
 			if err != nil {
 				errorMsg := fmt.Sprintf("An error occured during checking the preimage: %+v", err)
 				log.Printf("%v\n", errorMsg)
@@ -79,17 +92,14 @@ func createHandlerFunc(amount int64, address string, certFile string, macaroonFi
 }
 
 // NewGinMiddleware returns a Gin middleware in the form of a gin.HandlerFunc.
-// The amount parameter is the amount of satoshis you want to have paid for one API call.
-// The address parameter is the address of your LND node, including the port.
-// The certFile parameter is the path to the "tls.cert" file that your LND node uses.
-// The macaroonFile parameter is the path to the "admin.macaroon" file that your LND node uses.
-func NewGinMiddleware(amount int64, address string, certFile string, macaroonFile string) gin.HandlerFunc {
+func NewGinMiddleware(invoiceOptions InvoiceOptions, lndOptions LNDoptions) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		// Check if the request contains a header with the preimage that we need to check if the requester paid
 		preimage := ctx.GetHeader("x-preimage")
 		if preimage == "" {
 			// Generate the invoice
-			invoice, err := ln.GenerateInvoice(amount, address, certFile, macaroonFile)
+			invoice, err := ln.GenerateInvoice(invoiceOptions.Amount, invoiceOptions.Memo,
+				lndOptions.Address, lndOptions.CertFile, lndOptions.MacaroonFile)
 			if err != nil {
 				errorMsg := fmt.Sprintf("Couldn't generate invoice: %+v", err)
 				log.Println(errorMsg)
@@ -106,7 +116,7 @@ func NewGinMiddleware(amount int64, address string, certFile string, macaroonFil
 			}
 		} else {
 			// Check if the provided preimage belongs to a settled API payment invoice and that it wasn't already used
-			ok, err := ln.CheckPreimage(preimage, address, certFile, macaroonFile)
+			ok, err := ln.CheckPreimage(preimage, lndOptions.Address, lndOptions.CertFile, lndOptions.MacaroonFile)
 			if err != nil {
 				errorMsg := fmt.Sprintf("An error occured during checking the preimage: %+v", err)
 				log.Printf("%v\n", errorMsg)

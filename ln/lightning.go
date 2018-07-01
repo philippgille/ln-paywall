@@ -18,7 +18,7 @@ import (
 
 // GenerateInvoice generates an invoice with the given amount.
 // For doing so, a gRPC connection to the given address is established, using the given cert and macaroon files.
-func GenerateInvoice(amount int64, address string, certFile string, macaroonFile string) (string, error) {
+func GenerateInvoice(amount int64, memo string, address string, certFile string, macaroonFile string) (string, error) {
 	// Create the client
 	c, ctx, conn, err := NewLightningClient(address, certFile, macaroonFile)
 	if err != nil {
@@ -27,8 +27,11 @@ func GenerateInvoice(amount int64, address string, certFile string, macaroonFile
 	defer conn.Close()
 
 	// Create the request and send it
+	if memo == "" {
+		memo = "API call"
+	}
 	invoice := lnrpc.Invoice{
-		Memo:  "API call payment",
+		Memo:  memo,
 		Value: amount,
 	}
 	log.Println("Creating invoice for a new API request")

@@ -83,12 +83,17 @@ func withLogging(next http.HandlerFunc) http.HandlerFunc {
 
 func main() {
 	// Configure middleware
-	satoshis := int64(1)
-	address := "123.123.123.123:10009"
-	certFile := "tls.cert"
-	macaroonFile := "invoice.macaroon"
+	invoiceOptions := pay.InvoiceOptions{
+		Amount: 1,
+		Memo:   "Ping API call",
+	}
+	lndOptions := pay.LNDoptions{
+		Address:      "123.123.123.123:10009",
+		CertFile:     "tls.cert",
+		MacaroonFile: "invoice.macaroon",
+	}
 	// Create function that we can use in the middleware chain
-	withPayment := pay.NewHandlerFuncMiddleware(satoshis, address, certFile, macaroonFile)
+	withPayment := pay.NewHandlerFuncMiddleware(invoiceOptions, lndOptions)
 
 	// Use a chain of middlewares for the "/ping" endpoint
 	http.HandleFunc("/ping", withLogging(withPayment(pongHandler)))
@@ -111,11 +116,16 @@ func main() {
 	r := gin.Default()
 
 	// Configure and use middleware
-	satoshis := int64(1)
-	address := "123.123.123.123:10009"
-	certFile := "tls.cert"
-	macaroonFile := "invoice.macaroon"
-	r.Use(pay.NewGinMiddleware(satoshis, address, certFile, macaroonFile))
+	invoiceOptions := pay.InvoiceOptions{
+		Amount: 1,
+		Memo:   "Ping API call",
+	}
+	lndOptions := pay.LNDoptions{
+		Address:      "123.123.123.123:10009",
+		CertFile:     "tls.cert",
+		MacaroonFile: "invoice.macaroon",
+	}
+	r.Use(pay.NewGinMiddleware(invoiceOptions, lndOptions))
 
 	r.GET("/ping", func(c *gin.Context) {
 		c.String(200, "pong")
