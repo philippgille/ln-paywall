@@ -9,6 +9,7 @@ import (
 	"io/ioutil"
 	"log"
 
+	"github.com/go-redis/redis"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/metadata"
@@ -45,7 +46,7 @@ func GenerateInvoice(amount int64, memo string, address string, certFile string,
 
 // CheckPreimage takes a Base64 encoded preimage and checks if it's a valid preimage for an API payment.
 // For doing so, a gRPC connection to the given address is established, using the given cert and macaroon files.
-func CheckPreimage(preimage string, address string, certFile string, macaroonFile string) (bool, error) {
+func CheckPreimage(preimage string, address string, certFile string, macaroonFile string, redisClient *redis.Client) (bool, error) {
 	// Hash the preimage so we can get the invoice that belongs to it to check if it's settled
 
 	decodedPreimage, err := base64.StdEncoding.DecodeString(preimage)
@@ -85,9 +86,21 @@ func CheckPreimage(preimage string, address string, certFile string, macaroonFil
 	}
 
 	// Check if it was already used before
-	// TODO: implement
-
-	return true, nil
+	_, err = redisClient.Get(preimage).Result()
+	if err == redis.Nil {
+		// Key not found, so it wasn't used before.
+		// Insert key for future checks.
+		err := redisClient.Set(preimage, true, 0).Err()
+		if err != nil {
+			return false, err
+		}
+		return true, nil
+	} else if err != nil {
+		return false, err
+	} else {
+		// Key was found, which means the payment was already used for an API call
+		return false, nil
+	}
 }
 
 // NewLightningClient creates a new gRPC connection to the given address

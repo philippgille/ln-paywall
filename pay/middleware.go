@@ -7,6 +7,7 @@ import (
 	"os"
 
 	"github.com/gin-gonic/gin"
+	"github.com/go-redis/redis"
 
 	"github.com/philippgille/ln-paywall/ln"
 )
@@ -34,21 +35,36 @@ type LNDoptions struct {
 	MacaroonFile string
 }
 
+// RedisOptions are the options for the Redis DB
+type RedisOptions struct {
+	// Address of the Redis server, including the port
+	Address string
+	// Password for the Redis server, optional ("" by default)
+	Password string
+	// DB to use, optional (0 by default)
+	DB int
+}
+
 // NewHandlerFuncMiddleware returns a function which you can use within an http.HandlerFunc chain.
-func NewHandlerFuncMiddleware(invoiceOptions InvoiceOptions, lndOptions LNDoptions) func(http.HandlerFunc) http.HandlerFunc {
+func NewHandlerFuncMiddleware(invoiceOptions InvoiceOptions, lndOptions LNDoptions, redisOptions RedisOptions) func(http.HandlerFunc) http.HandlerFunc {
 	return func(next http.HandlerFunc) http.HandlerFunc {
-		return createHandlerFunc(invoiceOptions, lndOptions, next)
+		return createHandlerFunc(invoiceOptions, lndOptions, redisOptions, next)
 	}
 }
 
 // NewHandlerMiddleware returns a function which you can use within an http.Handler chain.
-func NewHandlerMiddleware(invoiceOptions InvoiceOptions, lndOptions LNDoptions) func(http.Handler) http.Handler {
+func NewHandlerMiddleware(invoiceOptions InvoiceOptions, lndOptions LNDoptions, redisOptions RedisOptions) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
-		return http.HandlerFunc(createHandlerFunc(invoiceOptions, lndOptions, next.ServeHTTP))
+		return http.HandlerFunc(createHandlerFunc(invoiceOptions, lndOptions, redisOptions, next.ServeHTTP))
 	}
 }
 
-func createHandlerFunc(invoiceOptions InvoiceOptions, lndOptions LNDoptions, next http.HandlerFunc) func(w http.ResponseWriter, r *http.Request) {
+func createHandlerFunc(invoiceOptions InvoiceOptions, lndOptions LNDoptions, redisOptions RedisOptions, next http.HandlerFunc) func(w http.ResponseWriter, r *http.Request) {
+	redisClient := redis.NewClient(&redis.Options{
+		Addr:     redisOptions.Address,
+		Password: redisOptions.Password,
+		DB:       redisOptions.DB,
+	})
 	return func(w http.ResponseWriter, r *http.Request) {
 		// Check if the request contains a header with the preimage that we need to check if the requester paid
 		preimage := r.Header.Get("x-preimage")
@@ -70,7 +86,7 @@ func createHandlerFunc(invoiceOptions InvoiceOptions, lndOptions LNDoptions, nex
 			}
 		} else {
 			// Check if the provided preimage belongs to a settled API payment invoice and that it wasn't already used
-			ok, err := ln.CheckPreimage(preimage, lndOptions.Address, lndOptions.CertFile, lndOptions.MacaroonFile)
+			ok, err := ln.CheckPreimage(preimage, lndOptions.Address, lndOptions.CertFile, lndOptions.MacaroonFile, redisClient)
 			if err != nil {
 				errorMsg := fmt.Sprintf("An error occured during checking the preimage: %+v", err)
 				log.Printf("%v\n", errorMsg)
@@ -92,7 +108,12 @@ func createHandlerFunc(invoiceOptions InvoiceOptions, lndOptions LNDoptions, nex
 }
 
 // NewGinMiddleware returns a Gin middleware in the form of a gin.HandlerFunc.
-func NewGinMiddleware(invoiceOptions InvoiceOptions, lndOptions LNDoptions) gin.HandlerFunc {
+func NewGinMiddleware(invoiceOptions InvoiceOptions, lndOptions LNDoptions, redisOptions RedisOptions) gin.HandlerFunc {
+	redisClient := redis.NewClient(&redis.Options{
+		Addr:     redisOptions.Address,
+		Password: redisOptions.Password,
+		DB:       redisOptions.DB,
+	})
 	return func(ctx *gin.Context) {
 		// Check if the request contains a header with the preimage that we need to check if the requester paid
 		preimage := ctx.GetHeader("x-preimage")
@@ -116,7 +137,7 @@ func NewGinMiddleware(invoiceOptions InvoiceOptions, lndOptions LNDoptions) gin.
 			}
 		} else {
 			// Check if the provided preimage belongs to a settled API payment invoice and that it wasn't already used
-			ok, err := ln.CheckPreimage(preimage, lndOptions.Address, lndOptions.CertFile, lndOptions.MacaroonFile)
+			ok, err := ln.CheckPreimage(preimage, lndOptions.Address, lndOptions.CertFile, lndOptions.MacaroonFile, redisClient)
 			if err != nil {
 				errorMsg := fmt.Sprintf("An error occured during checking the preimage: %+v", err)
 				log.Printf("%v\n", errorMsg)

@@ -19,6 +19,7 @@ Contents
 --------
 
 - [Purpose](#purpose)
+- [Prerequisites](#prerequisites)
 - [Usage](#usage)
     - [net/http HandlerFunc](#nethttp-HandlerFunc)
     - [Gin](#gin)
@@ -48,12 +49,22 @@ With `ln-paywall` you can simply use one of the provided middlewares in your Go 
 1. The first request gets rejected with the `402 Payment Required` HTTP status and a Lightning ([BOLT-11](https://github.com/lightningnetwork/lightning-rfc/blob/master/11-payment-encoding.md)-compatible) invoice in the body
 2. The second request must contain a `X-preimage` header with the preimage of the paid Lightning invoice. The middleware checks if the invoice was paid and if yes, continues to the next middleware in your middleware chain.
 
+Prerequisites
+-------------
+
+There are two prerequisites:
+
+1. A running [lnd](https://github.com/lightningnetwork/lnd) node which listens to gRPC connections
+	- If you don't run it locally, it needs to listen to connections from external machines (so for example on 0.0.0.0 instead of localhost) and has the TLS certificate configured to include the external IP address of the node.
+2. A running [Redis](https://redis.io/) server
+	- Redis is used to cache preimages that have been used as a payment for an API call, so that a user can't do multiple requests with the same preimage of a settled Lightning payment
+	- Run for example with Docker: `docker run -d redis`
+		- Note: In production you should use a configuration with password!
+
 Usage
 -----
 
-The only prerequisite is a running [lnd](https://github.com/lightningnetwork/lnd) node which listens to gRPC connections from external machines (so for example on 0.0.0.0 instead of localhost) and has the TLS certificate configured to include the external IP address of the node.
-
-In both examples we create a web server that responds to requests to `/ping` with "pong".
+In both examples we create a web service that responds to requests to `/ping` with "pong".
 
 ### net/http HandlerFunc
 
@@ -92,8 +103,11 @@ func main() {
 		CertFile:     "tls.cert",
 		MacaroonFile: "invoice.macaroon",
 	}
+	redisOptions := pay.RedisOptions{
+		Address:  "localhost:6379",
+	}
 	// Create function that we can use in the middleware chain
-	withPayment := pay.NewHandlerFuncMiddleware(invoiceOptions, lndOptions)
+	withPayment := pay.NewHandlerFuncMiddleware(invoiceOptions, lndOptions, redisOptions)
 
 	// Use a chain of middlewares for the "/ping" endpoint
 	http.HandleFunc("/ping", withLogging(withPayment(pongHandler)))
@@ -125,7 +139,10 @@ func main() {
 		CertFile:     "tls.cert",
 		MacaroonFile: "invoice.macaroon",
 	}
-	r.Use(pay.NewGinMiddleware(invoiceOptions, lndOptions))
+	redisOptions := pay.RedisOptions{
+		Address: "localhost:6379",
+	}
+	r.Use(pay.NewGinMiddleware(invoiceOptions, lndOptions, redisOptions))
 
 	r.GET("/ping", func(c *gin.Context) {
 		c.String(200, "pong")
