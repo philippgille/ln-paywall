@@ -1,7 +1,7 @@
-go-paypercall
-=============
+ln-paywall
+==========
 
-[![Go Report Card](https://goreportcard.com/badge/github.com/philippgille/go-paypercall)](https://goreportcard.com/report/github.com/philippgille/go-paypercall)
+[![Go Report Card](https://goreportcard.com/badge/github.com/philippgille/ln-paywall)](https://goreportcard.com/report/github.com/philippgille/ln-paywall)
 
 Go middleware for monetizing your API on a pay-per-call basis with Bitcoin and Lightning ⚡️
 
@@ -42,7 +42,7 @@ With cryptocurrencies in general some of those problems were solved, but with lo
 
 But then came the [Lightning Network](https://lightning.network/), an implementation of routed payment channels, which enables *real* **instant** and **zero-fee** transactions (which cryptocurrencies have long promised, but never delivered).
 
-With `go-paypercall` you can simply use one of the provided middlewares in your Go web service to have your web service do two things:
+With `ln-paywall` you can simply use one of the provided middlewares in your Go web service to have your web service do two things:
 
 1. The first request gets rejected with the `402 Payment Required` HTTP status and a Lightning ([BOLT-11](https://github.com/lightningnetwork/lightning-rfc/blob/master/11-payment-encoding.md)-compatible) invoice in the body
 2. The second request must contain a `X-preimage` header with the preimage of the paid Lightning invoice. The middleware checks if the invoice was paid and if yes, continues to the next middleware in your middleware chain.
@@ -66,7 +66,7 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/philippgille/go-paypercall/pay"
+	"github.com/philippgille/ln-paywall/pay"
 )
 
 func pongHandler(w http.ResponseWriter, r *http.Request) {
@@ -103,7 +103,7 @@ package main
 import (
 	"github.com/gin-gonic/gin"
 
-	"github.com/philippgille/go-paypercall/pay"
+	"github.com/philippgille/ln-paywall/pay"
 )
 
 func main() {

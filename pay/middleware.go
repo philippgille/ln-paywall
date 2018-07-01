@@ -8,7 +8,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"github.com/philippgille/go-paypercall/ln"
+	"github.com/philippgille/ln-paywall/ln"
 )
 
 // stdOutLogger logs to stdout, while the default log package loggers log to stderr.

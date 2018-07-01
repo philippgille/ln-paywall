@@ -13,7 +13,7 @@ import (
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/metadata"
 
-	"github.com/philippgille/go-paypercall/lnrpc"
+	"github.com/philippgille/ln-paywall/lnrpc"
 )
 
 // GenerateInvoice generates an invoice with the given amount.
