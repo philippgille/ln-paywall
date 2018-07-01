@@ -65,7 +65,6 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"path/filepath"
 
 	"github.com/philippgille/go-paypercall/pay"
 )
@@ -82,16 +81,11 @@ func withLogging(next http.HandlerFunc) http.HandlerFunc {
 }
 
 func main() {
-	certFile, err := filepath.Abs("tls.cert")
-	if err != nil {
-		panic(err)
-	}
-	macaroonFile, err := filepath.Abs("invoice.macaroon")
-	if err != nil {
-		panic(err)
-	}
+	// Configure middleware
 	satoshis := int64(1)
 	address := "123.123.123.123:10009"
+	certFile := "tls.cert"
+	macaroonFile := "invoice.macaroon"
 	// Create function that we can use in the middleware chain
 	withPayment := pay.NewHandlerFuncMiddleware(satoshis, address, certFile, macaroonFile)
 
@@ -107,8 +101,6 @@ func main() {
 package main
 
 import (
-	"path/filepath"
-
 	"github.com/gin-gonic/gin"
 
 	"github.com/philippgille/go-paypercall/pay"
@@ -117,18 +109,13 @@ import (
 func main() {
 	r := gin.Default()
 
-	certFile, err := filepath.Abs("tls.cert")
-	if err != nil {
-		panic(err)
-	}
-	macaroonFile, err := filepath.Abs("invoice.macaroon")
-	if err != nil {
-		panic(err)
-	}
+	// Configure and use middleware
 	satoshis := int64(1)
 	address := "123.123.123.123:10009"
-
+	certFile := "tls.cert"
+	macaroonFile := "invoice.macaroon"
 	r.Use(pay.NewGinMiddleware(satoshis, address, certFile, macaroonFile))
+
 	r.GET("/ping", func(c *gin.Context) {
 		c.String(200, "pong")
 	})
