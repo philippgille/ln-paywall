@@ -3,12 +3,13 @@ ln-paywall
 
 [![Go Report Card](https://goreportcard.com/badge/github.com/philippgille/ln-paywall)](https://goreportcard.com/report/github.com/philippgille/ln-paywall)
 
-Go middleware for monetizing your API on a pay-per-call basis with Bitcoin and Lightning ⚡️
+Go middleware for monetizing your API on a per-request basis with Bitcoin and Lightning ⚡️
 
 Middlewares for:
 
 - [X] [net/http](https://golang.org/pkg/net/http/) `HandlerFunc`
-- [X] [net/http](https://golang.org/pkg/net/http/) `Handler` (also compatible with routers like [gorilla/mux](https://github.com/gorilla/mux) and [chi](https://github.com/go-chi/chi))
+- [X] [net/http](https://golang.org/pkg/net/http/) `Handler`
+	- Compatible with routers like [gorilla/mux](https://github.com/gorilla/mux) and [chi](https://github.com/go-chi/chi)
 - [X] [Gin](https://github.com/gin-gonic/gin)
 - [ ] [Echo](https://github.com/labstack/echo)
 
@@ -28,14 +29,14 @@ Purpose
 
 Until the rise of cryptocurrencies, if you wanted to monetize your API (set up a paywall), you had to:
 
-1. Use a centralized service (like PayPal) or bank
+1. Use a centralized service (like PayPal)
     - Can shut you down any time
     - High fees
     - Your API users need an account
     - Can be hacked
 2. Keep track of your API users (keep accounts and their API keys in some database)
     - Privacy concerns
-    - Data breaches
+    - Data breaches / leaks
 3. Charge for a bunch of requests, like 10.000 at a time, because real per-request payments weren't possible
 
 With cryptocurrencies in general some of those problems were solved, but with long confirmation times and per-transaction fees a real per-request billing was still not feasable.
