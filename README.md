@@ -1,7 +1,7 @@
 ln-paywall
 ==========
 
-[![GoDoc](http://www.godoc.org/github.com/philippgille/ln-paywall/pay?status.svg)](http://www.godoc.org/github.com/philippgille/ln-paywall/pay) [![Go Report Card](https://goreportcard.com/badge/github.com/philippgille/ln-paywall)](https://goreportcard.com/report/github.com/philippgille/ln-paywall)
+[![GoDoc](http://www.godoc.org/github.com/philippgille/ln-paywall/pay?status.svg)](http://www.godoc.org/github.com/philippgille/ln-paywall/pay) [![Go Report Card](https://goreportcard.com/badge/github.com/philippgille/ln-paywall)](https://goreportcard.com/report/github.com/philippgille/ln-paywall) [![GitHub Releases](https://img.shields.io/github/release/philippgille/ln-paywall.svg)](https://github.com/philippgille/ln-paywall/releases)
 
 Go middleware for monetizing your API on a per-request basis with Bitcoin and Lightning ⚡️
 
