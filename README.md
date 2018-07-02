@@ -1,7 +1,7 @@
 ln-paywall
 ==========
 
-[![Go Report Card](https://goreportcard.com/badge/github.com/philippgille/ln-paywall)](https://goreportcard.com/report/github.com/philippgille/ln-paywall)
+[![GoDoc](http://www.godoc.org/github.com/philippgille/ln-paywall/pay?status.svg)](http://www.godoc.org/github.com/philippgille/ln-paywall/pay) [![Go Report Card](https://goreportcard.com/badge/github.com/philippgille/ln-paywall)](https://goreportcard.com/report/github.com/philippgille/ln-paywall)
 
 Go middleware for monetizing your API on a per-request basis with Bitcoin and Lightning ⚡️
 
@@ -19,6 +19,7 @@ Contents
 --------
 
 - [Purpose](#purpose)
+- [How it works](#how-it-works)
 - [Prerequisites](#prerequisites)
 - [Usage](#usage)
     - [net/http HandlerFunc](#nethttp-HandlerFunc)
@@ -42,17 +43,22 @@ Until the rise of cryptocurrencies, if you wanted to monetize your API (set up a
 
 With cryptocurrencies in general some of those problems were solved, but with long confirmation times and per-transaction fees a real per-request billing was still not feasable.
 
-But then came the [Lightning Network](https://lightning.network/), an implementation of routed payment channels, which enables *real* **instant** and **zero-fee** transactions (which cryptocurrencies have long promised, but never delivered).
+But then came the [Lightning Network](https://lightning.network/), an implementation of routed payment channels, which enables *real* **instant** and **zero-fee** transactions (which cryptocurrencies have long promised, but never delivered). **It's a second layer on top of existing cryptocurrencies like Bitcoin that scales far beyond the limitations of the underlying blockchain.**
+
+`ln-paywall` makes it easy to set up an API paywall for payments over the Lightning Network.
+
+How it works
+------------
 
 With `ln-paywall` you can simply use one of the provided middlewares in your Go web service to have your web service do two things:
 
-1. The first request gets rejected with the `402 Payment Required` HTTP status and a Lightning ([BOLT-11](https://github.com/lightningnetwork/lightning-rfc/blob/master/11-payment-encoding.md)-compatible) invoice in the body
-2. The second request must contain a `X-preimage` header with the preimage of the paid Lightning invoice. The middleware checks if the invoice was paid and if yes, continues to the next middleware in your middleware chain.
+1. The first request gets rejected with the `402 Payment Required` HTTP status and a Lightning ([BOLT-11](https://github.com/lightningnetwork/lightning-rfc/blob/master/11-payment-encoding.md)-conforming) invoice in the body
+2. The second request must contain a `X-preimage` header with the preimage of the paid Lightning invoice. The middleware checks if the invoice was paid and if yes, continues to the next middleware or final request handler.
 
 Prerequisites
 -------------
 
-There are two prerequisites:
+There are currently two prerequisites:
 
 1. A running [lnd](https://github.com/lightningnetwork/lnd) node which listens to gRPC connections
 	- If you don't run it locally, it needs to listen to connections from external machines (so for example on 0.0.0.0 instead of localhost) and has the TLS certificate configured to include the external IP address of the node.
@@ -60,6 +66,8 @@ There are two prerequisites:
 	- Redis is used to cache preimages that have been used as a payment for an API call, so that a user can't do multiple requests with the same preimage of a settled Lightning payment
 	- Run for example with Docker: `docker run -d redis`
 		- Note: In production you should use a configuration with password!
+
+We're working on implementing other storage mechanisms, so you don't have to run a Redis server. Some possibilities are: A simple Go map, an embedded DB (Bolt, Badger or SQLite) and Hazelcast, with each one having different limitations. Another option is to have no storage at all, by just deleting an invoice from the lnd node as soon as the related request has been processed, which has the limitation that keeping invoices might be necessary for some use-cases.
 
 Usage
 -----
@@ -163,3 +171,6 @@ Related Projects
     - Payment: Interledger
 - [https://moonbanking.com/api](https://moonbanking.com/api)
     - API that *uses* a similar functionality, not *providing* it
+- [https://www.coinbee.io/](https://www.coinbee.io/)
+	- Paid service for Bitcoin paywalls (no Lightning)
+	- Looks like its meant for websites only, not APIs, because the browser session is involved
