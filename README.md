@@ -72,7 +72,11 @@ We're working on implementing other storage mechanisms, so you don't have to run
 Usage
 -----
 
-In both examples we create a web service that responds to requests to `/ping` with "pong".
+Get the package with `go get -u github.com/philippgille/ln-paywall/pay`.
+
+We strongly encourage you to use vendoring, because as long as `ln-paywall` is version `0.x`, breaking changes may be introduced in new versions, including changes to the package name / import path. The project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html) and all notable changes to this project are documented in [RELEASES.md](https://github.com/philippgille/ln-paywall/blob/master/RELEASES.md).
+
+The best way to see how to use `ln-paywall` is by example. In the below examples we create a web service that responds to requests to `/ping` with "pong".
 
 ### net/http HandlerFunc
 
