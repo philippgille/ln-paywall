@@ -8,6 +8,13 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) a
 vNext
 -----
 
+- Added: Interface `ln.StorageClient` - an abstraction for multiple storage clients
+    - Methods `WasUsed(string) (bool, error)` and `SetUsed(string) error`
+- Added: Struct `pay.RedisClient` - implements the `ln.StorageClient` interface
+    - Factory function `NewRedisClient(...)`
+- Changed: `pay.NewHandlerFuncMiddleware(...)`, `pay.NewHandlerMiddleware(...)` and `pay.NewGinMiddleware(...)` now take a `ln.StorageClient` instead of a `*redis.Client` as parameter
+- Changed: `ln.CheckPreimage(...)` now takes a `ln.StorageClient` instead of a `*redis.Client` as parameter
+
 v0.1.0 (2018-07-02)
 -------------------
 

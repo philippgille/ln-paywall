@@ -118,8 +118,9 @@ func main() {
 	redisOptions := pay.RedisOptions{
 		Address:  "localhost:6379",
 	}
+	redisClient := pay.NewRedisClient(redisOptions)
 	// Create function that we can use in the middleware chain
-	withPayment := pay.NewHandlerFuncMiddleware(invoiceOptions, lndOptions, redisOptions)
+	withPayment := pay.NewHandlerFuncMiddleware(invoiceOptions, lndOptions, redisClient)
 
 	// Use a chain of middlewares for the "/ping" endpoint
 	http.HandleFunc("/ping", withLogging(withPayment(pongHandler)))
@@ -154,7 +155,8 @@ func main() {
 	redisOptions := pay.RedisOptions{
 		Address: "localhost:6379",
 	}
-	r.Use(pay.NewGinMiddleware(invoiceOptions, lndOptions, redisOptions))
+	redisClient := pay.NewRedisClient(redisOptions)
+	r.Use(pay.NewGinMiddleware(invoiceOptions, lndOptions, redisClient))
 
 	r.GET("/ping", func(c *gin.Context) {
 		c.String(200, "pong")

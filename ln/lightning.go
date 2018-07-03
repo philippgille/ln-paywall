@@ -9,13 +9,20 @@ import (
 	"io/ioutil"
 	"log"
 
-	"github.com/go-redis/redis"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/metadata"
 
 	"github.com/philippgille/ln-paywall/lnrpc"
 )
+
+// StorageClient is an abstraction for different storage client implementations.
+// A storage client must only be able to check if a preimage was already used for a payment bofore
+// and to store a preimage that was used before.
+type StorageClient interface {
+	WasUsed(string) (bool, error)
+	SetUsed(string) error
+}
 
 // GenerateInvoice generates an invoice with the given amount.
 // For doing so, a gRPC connection to the given address is established, using the given cert and macaroon files.
@@ -46,7 +53,7 @@ func GenerateInvoice(amount int64, memo string, address string, certFile string,
 
 // CheckPreimage takes a Base64 encoded preimage and checks if it's a valid preimage for an API payment.
 // For doing so, a gRPC connection to the given address is established, using the given cert and macaroon files.
-func CheckPreimage(preimage string, address string, certFile string, macaroonFile string, redisClient *redis.Client) (bool, error) {
+func CheckPreimage(preimage string, address string, certFile string, macaroonFile string, storageClient StorageClient) (bool, error) {
 	// Hash the preimage so we can get the invoice that belongs to it to check if it's settled
 
 	decodedPreimage, err := base64.StdEncoding.DecodeString(preimage)
@@ -86,21 +93,21 @@ func CheckPreimage(preimage string, address string, certFile string, macaroonFil
 	}
 
 	// Check if it was already used before
-	_, err = redisClient.Get(preimage).Result()
-	if err == redis.Nil {
-		// Key not found, so it wasn't used before.
-		// Insert key for future checks.
-		err := redisClient.Set(preimage, true, 0).Err()
-		if err != nil {
-			return false, err
-		}
-		return true, nil
-	} else if err != nil {
+	wasUsed, err := storageClient.WasUsed(preimage)
+	if err != nil {
 		return false, err
-	} else {
-		// Key was found, which means the payment was already used for an API call
+	}
+	if wasUsed {
+		// Key was found, which means the payment was already used for an API call.
 		return false, nil
 	}
+	// Key not found, so it wasn't used before.
+	// Insert key for future checks.
+	err = storageClient.SetUsed(preimage)
+	if err != nil {
+		return true, err
+	}
+	return true, nil
 }
 
 // NewLightningClient creates a new gRPC connection to the given address
