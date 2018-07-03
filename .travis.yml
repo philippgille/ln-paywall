@@ -1,0 +1,17 @@
+git:
+  depth: 1
+
+language: go
+
+go:
+  - "1.10"
+
+before_install:
+  - go version
+  - go env
+
+script:
+  # builds
+  - go build github.com/philippgille/ln-paywall/...
+  # tests
+  - go test -v github.com/philippgille/ln-paywall/...
