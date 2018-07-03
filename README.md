@@ -62,17 +62,19 @@ There are currently two prerequisites:
 
 1. A running [lnd](https://github.com/lightningnetwork/lnd) node which listens to gRPC connections
 	- If you don't run it locally, it needs to listen to connections from external machines (so for example on 0.0.0.0 instead of localhost) and has the TLS certificate configured to include the external IP address of the node.
-2. A running [Redis](https://redis.io/) server
-	- Redis is used to cache preimages that have been used as a payment for an API call, so that a user can't do multiple requests with the same preimage of a settled Lightning payment
-	- Run for example with Docker: `docker run -d redis`
-		- Note: In production you should use a configuration with password!
-
-We're working on implementing other storage mechanisms, so you don't have to run a Redis server. Some possibilities are: A simple Go map, an embedded DB (Bolt, Badger or SQLite) and Hazelcast, with each one having different limitations. Another option is to have no storage at all, by just deleting an invoice from the lnd node as soon as the related request has been processed, which has the limitation that keeping invoices might be necessary for some use-cases.
+2. A supported storage mechanism. It's used to cache preimages that have been used as a payment for an API call, so that a user can't do multiple requests with the same preimage of a settled Lightning payment. The `pay` package currently provides factory functions for the following storages:
+	- [Redis](https://redis.io/)
+		- Run for example with Docker: `docker run -d redis`
+			- Note: In production you should use a configuration with password!
+	- A simple Go map
+		- Disadvantage: Doesn't persist data, so when you restart your server, users can re-use old preimages
+	- Roll your own!
+		- Just implement the simple `ln.StorageClient` interface (only two methods!)
 
 Usage
 -----
 
-Get the package with `go get -u github.com/philippgille/ln-paywall/pay`.
+Get the package with `go get -u github.com/philippgille/ln-paywall/...`.
 
 We strongly encourage you to use vendoring, because as long as `ln-paywall` is version `0.x`, breaking changes may be introduced in new versions, including changes to the package name / import path. The project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html) and all notable changes to this project are documented in [RELEASES.md](https://github.com/philippgille/ln-paywall/blob/master/RELEASES.md).
 

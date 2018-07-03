@@ -12,6 +12,8 @@ vNext
     - Methods `WasUsed(string) (bool, error)` and `SetUsed(string) error`
 - Added: Struct `pay.RedisClient` - implements the `ln.StorageClient` interface
     - Factory function `NewRedisClient(...)`
+- Added: Struct `pay.GoMap` - implements the `ln.StorageClient` interface
+    - Factory function `NewGoMap()`
 - Changed: `pay.NewHandlerFuncMiddleware(...)`, `pay.NewHandlerMiddleware(...)` and `pay.NewGinMiddleware(...)` now take a `ln.StorageClient` instead of a `*redis.Client` as parameter
 - Changed: `ln.CheckPreimage(...)` now takes a `ln.StorageClient` instead of a `*redis.Client` as parameter
 
