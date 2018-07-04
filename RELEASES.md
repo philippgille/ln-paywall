@@ -16,6 +16,7 @@ vNext
     - Factory function `NewGoMap()`
 - Changed: `pay.NewHandlerFuncMiddleware(...)`, `pay.NewHandlerMiddleware(...)` and `pay.NewGinMiddleware(...)` now take a `ln.StorageClient` instead of a `*redis.Client` as parameter
 - Changed: `ln.CheckPreimage(...)` now takes a `ln.StorageClient` instead of a `*redis.Client` as parameter
+- Removed: Package `lnrpc` - Instead of using our own generated lnd gRPC Go file, import the one from Lightning Labs
 
 v0.1.0 (2018-07-02)
 -------------------

@@ -13,7 +13,7 @@ import (
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/metadata"
 
-	"github.com/philippgille/ln-paywall/lnrpc"
+	"github.com/lightningnetwork/lnd/lnrpc"
 )
 
 // StorageClient is an abstraction for different storage client implementations.
