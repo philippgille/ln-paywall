@@ -117,10 +117,7 @@ func main() {
 		CertFile:     "tls.cert",
 		MacaroonFile: "invoice.macaroon",
 	}
-	redisOptions := pay.RedisOptions{
-		Address:  "localhost:6379",
-	}
-	redisClient := pay.NewRedisClient(redisOptions)
+	redisClient := pay.NewRedisClient(pay.DefaultRedisOptions()) // Connects to localhost:6379
 	// Create function that we can use in the middleware chain
 	withPayment := pay.NewHandlerFuncMiddleware(invoiceOptions, lndOptions, redisClient)
 
@@ -154,10 +151,7 @@ func main() {
 		CertFile:     "tls.cert",
 		MacaroonFile: "invoice.macaroon",
 	}
-	redisOptions := pay.RedisOptions{
-		Address: "localhost:6379",
-	}
-	redisClient := pay.NewRedisClient(redisOptions)
+	redisClient := pay.NewRedisClient(pay.DefaultRedisOptions) // Connects to localhost:6379
 	r.Use(pay.NewGinMiddleware(invoiceOptions, lndOptions, redisClient))
 
 	r.GET("/ping", func(c *gin.Context) {

@@ -12,8 +12,10 @@ vNext
     - Methods `WasUsed(string) (bool, error)` and `SetUsed(string) error`
 - Added: Struct `pay.RedisClient` - implements the `ln.StorageClient` interface
     - Factory function `NewRedisClient(...)`
+- Added: Var `pay.DefaultRedisOptions` - a `Redisoptions` object with default values
 - Added: Struct `pay.GoMap` - implements the `ln.StorageClient` interface
     - Factory function `NewGoMap()`
+- Improved: All fields of the struct `pay.RedisOptions` are now optional
 - Changed: `pay.NewHandlerFuncMiddleware(...)`, `pay.NewHandlerMiddleware(...)` and `pay.NewGinMiddleware(...)` now take a `ln.StorageClient` instead of a `*redis.Client` as parameter
 - Changed: `ln.CheckPreimage(...)` now takes a `ln.StorageClient` instead of a `*redis.Client` as parameter
 - Removed: Package `lnrpc` - Instead of using our own generated lnd gRPC Go file, import the one from Lightning Labs
