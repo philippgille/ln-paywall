@@ -35,20 +35,20 @@ type LNDoptions struct {
 }
 
 // NewHandlerFuncMiddleware returns a function which you can use within an http.HandlerFunc chain.
-func NewHandlerFuncMiddleware(invoiceOptions InvoiceOptions, lndOptions LNDoptions, storageClient ln.StorageClient) func(http.HandlerFunc) http.HandlerFunc {
+func NewHandlerFuncMiddleware(invoiceOptions InvoiceOptions, lndOptions LNDoptions, storageClient StorageClient) func(http.HandlerFunc) http.HandlerFunc {
 	return func(next http.HandlerFunc) http.HandlerFunc {
 		return createHandlerFunc(invoiceOptions, lndOptions, storageClient, next)
 	}
 }
 
 // NewHandlerMiddleware returns a function which you can use within an http.Handler chain.
-func NewHandlerMiddleware(invoiceOptions InvoiceOptions, lndOptions LNDoptions, storageClient ln.StorageClient) func(http.Handler) http.Handler {
+func NewHandlerMiddleware(invoiceOptions InvoiceOptions, lndOptions LNDoptions, storageClient StorageClient) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(createHandlerFunc(invoiceOptions, lndOptions, storageClient, next.ServeHTTP))
 	}
 }
 
-func createHandlerFunc(invoiceOptions InvoiceOptions, lndOptions LNDoptions, storageClient ln.StorageClient, next http.HandlerFunc) func(w http.ResponseWriter, r *http.Request) {
+func createHandlerFunc(invoiceOptions InvoiceOptions, lndOptions LNDoptions, storageClient StorageClient, next http.HandlerFunc) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// Check if the request contains a header with the preimage that we need to check if the requester paid
 		preimage := r.Header.Get("x-preimage")
@@ -69,8 +69,8 @@ func createHandlerFunc(invoiceOptions InvoiceOptions, lndOptions LNDoptions, sto
 				w.Write([]byte(invoice))
 			}
 		} else {
-			// Check if the provided preimage belongs to a settled API payment invoice and that it wasn't already used
-			ok, err := ln.CheckPreimage(preimage, lndOptions.Address, lndOptions.CertFile, lndOptions.MacaroonFile, storageClient)
+			// Check if the provided preimage belongs to a settled API payment invoice and that it wasn't already used and store used preimages
+			ok, err := handlePreimage(preimage, lndOptions.Address, lndOptions.CertFile, lndOptions.MacaroonFile, storageClient)
 			if err != nil {
 				errorMsg := fmt.Sprintf("An error occured during checking the preimage: %+v", err)
 				log.Printf("%v\n", errorMsg)
@@ -92,7 +92,7 @@ func createHandlerFunc(invoiceOptions InvoiceOptions, lndOptions LNDoptions, sto
 }
 
 // NewGinMiddleware returns a Gin middleware in the form of a gin.HandlerFunc.
-func NewGinMiddleware(invoiceOptions InvoiceOptions, lndOptions LNDoptions, storageClient ln.StorageClient) gin.HandlerFunc {
+func NewGinMiddleware(invoiceOptions InvoiceOptions, lndOptions LNDoptions, storageClient StorageClient) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		// Check if the request contains a header with the preimage that we need to check if the requester paid
 		preimage := ctx.GetHeader("x-preimage")
@@ -115,8 +115,8 @@ func NewGinMiddleware(invoiceOptions InvoiceOptions, lndOptions LNDoptions, stor
 				ctx.Abort()
 			}
 		} else {
-			// Check if the provided preimage belongs to a settled API payment invoice and that it wasn't already used
-			ok, err := ln.CheckPreimage(preimage, lndOptions.Address, lndOptions.CertFile, lndOptions.MacaroonFile, storageClient)
+			// Check if the provided preimage belongs to a settled API payment invoice and that it wasn't already used and store used preimages
+			ok, err := handlePreimage(preimage, lndOptions.Address, lndOptions.CertFile, lndOptions.MacaroonFile, storageClient)
 			if err != nil {
 				errorMsg := fmt.Sprintf("An error occured during checking the preimage: %+v", err)
 				log.Printf("%v\n", errorMsg)
@@ -137,4 +137,48 @@ func NewGinMiddleware(invoiceOptions InvoiceOptions, lndOptions LNDoptions, stor
 			}
 		}
 	}
+}
+
+// StorageClient is an abstraction for different storage client implementations.
+// A storage client must only be able to check if a preimage was already used for a payment bofore
+// and to store a preimage that was used before.
+type StorageClient interface {
+	WasUsed(string) (bool, error)
+	SetUsed(string) error
+}
+
+// handlePreimage does four things:
+// 1) Checks if the preimage was already used as a payment proof before.
+// 2) Checks if the preimage corresponds to an existing invoice on the connected lnd.
+// 3) Checks if the corresponding invoice was settled.
+// 4) Store the preimage to the storage for future checks.
+// Returns false and an empty error if the preimage was already used or if the corresponding invoice isn't settled.
+// Returns true and an empty error if everythings's fine.
+func handlePreimage(preimage string, address string, certFile string, macaroonFile string, storageClient StorageClient) (bool, error) {
+	// Check if it was already used before
+	wasUsed, err := storageClient.WasUsed(preimage)
+	if err != nil {
+		return false, err
+	}
+	if wasUsed {
+		// Key was found, which means the payment was already used for an API call.
+		return false, nil
+	}
+
+	// Check if a corresponding invoice exists and is settled
+	settled, err := ln.CheckInvoice(preimage, address, certFile, macaroonFile)
+	if err != nil {
+		return false, err
+	}
+	if !settled {
+		return false, nil
+	}
+
+	// Key not found, so it wasn't used before.
+	// Insert key for future checks.
+	err = storageClient.SetUsed(preimage)
+	if err != nil {
+		return true, err
+	}
+	return true, nil
 }
