@@ -43,7 +43,7 @@ Until the rise of cryptocurrencies, if you wanted to monetize your API (set up a
 
 With cryptocurrencies in general some of those problems were solved, but with long confirmation times and per-transaction fees a real per-request billing was still not feasable.
 
-But then came the [Lightning Network](https://lightning.network/), an implementation of routed payment channels, which enables *real* **instant** and **zero-fee** transactions (which cryptocurrencies have long promised, but never delivered). **It's a second layer on top of existing cryptocurrencies like Bitcoin that scales far beyond the limitations of the underlying blockchain.**
+But then came the [Lightning Network](https://lightning.network/), an implementation of routed payment channels, which enables *real* **instant microtransactions** with **extremely low fees** (which cryptocurrencies have long promised, but never delivered). It's a *second layer* on top of existing cryptocurrencies like Bitcoin that scales far beyond the limitations of the underlying blockchain.
 
 `ln-paywall` makes it easy to set up an API paywall for payments over the Lightning Network.
 
@@ -52,8 +52,8 @@ How it works
 
 With `ln-paywall` you can simply use one of the provided middlewares in your Go web service to have your web service do two things:
 
-1. The first request gets rejected with the `402 Payment Required` HTTP status and a Lightning ([BOLT-11](https://github.com/lightningnetwork/lightning-rfc/blob/master/11-payment-encoding.md)-conforming) invoice in the body
-2. The second request must contain a `X-preimage` header with the preimage of the paid Lightning invoice. The middleware checks if the invoice was paid and if yes, continues to the next middleware or final request handler.
+1. The first request gets rejected with the `402 Payment Required` HTTP status, a `Content-Type: application/vnd.lightning.bolt11` header and a Lightning ([BOLT-11](https://github.com/lightningnetwork/lightning-rfc/blob/master/11-payment-encoding.md)-conforming) invoice in the body
+2. The second request must contain a `X-Preimage` header with the preimage of the paid Lightning invoice. The middleware checks if 1) the invoice was paid and 2) not already used for a previous request. If both preconditions are met, it continues to the next middleware or final request handler.
 
 Prerequisites
 -------------
