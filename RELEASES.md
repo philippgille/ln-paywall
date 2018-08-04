@@ -8,24 +8,28 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) a
 vNext
 -----
 
+Enhancements:
+
+- Added: `pay.NewEchoMiddleware(...)` - A middleware factory function for [Echo](https://github.com/labstack/echo) (issue [#2](https://github.com/philippgille/ln-paywall/issues/2))
+
 v0.2.0 (2018-07-29)
 -------------------
 
 Enhancements:
 
-- Added: Interface `pay.StorageClient` - an abstraction for multiple storage clients, which allows you to write your own storage client for storing the preimages that have already been used as payment proof in a request
+- Added: Interface `pay.StorageClient` - an abstraction for multiple storage clients, which allows you to write your own storage client for storing the preimages that have already been used as payment proof in a request (issue [#1](https://github.com/philippgille/ln-paywall/issues/1))
     - Methods `WasUsed(string) (bool, error)` and `SetUsed(string) error`
-- Added: Struct `pay.RedisClient` - implements the `StorageClient` interface
+- Added: Struct `pay.RedisClient` - implements the `StorageClient` interface (issue [#1](https://github.com/philippgille/ln-paywall/issues/1))
     - Factory function `NewRedisClient(...)`
 - Added: Var `pay.DefaultRedisOptions` - a `Redisoptions` object with default values
-- Added: Struct `pay.GoMap` - implements the `StorageClient` interface
+- Added: Struct `pay.GoMap` - implements the `StorageClient` interface (issue [#1](https://github.com/philippgille/ln-paywall/issues/1))
     - Factory function `NewGoMap()`
 - Improved: Increased middleware performance and decreased load on the connected lnd when invalid requests with the `x-preimage` header are received (invalid because the preimage was already used) - Instead of first getting a corresponding invoice for a preimage from the lnd and *then* checking if the preimage was used already, the order of these operations was switched, because then, if the preimage was already used, no request to lnd needs to be made anymore.
 - Improved: All fields of the struct `pay.RedisOptions` are now optional
 
 Breaking changes:
 
-- Changed: `pay.NewHandlerFuncMiddleware(...)`, `pay.NewHandlerMiddleware(...)` and `pay.NewGinMiddleware(...)` now take a `ln.StorageClient` instead of a `*redis.Client` as parameter
+- Changed: `pay.NewHandlerFuncMiddleware(...)`, `pay.NewHandlerMiddleware(...)` and `pay.NewGinMiddleware(...)` now take a `ln.StorageClient` instead of a `*redis.Client` as parameter (issue [#1](https://github.com/philippgille/ln-paywall/issues/1))
 - Changed: `ln.CheckPreimage(...)` was renamed to `ln.CheckInvoice(...)` and doesn't check the storage anymore. The `ln` methods are supposed to just handle lightning related things and nothing else. This shouldn't affect anyone, because `ln` is meant to be used only internally.
 - Removed: Package `lnrpc` - Instead of using our own generated lnd gRPC Go file, import the one from Lightning Labs. This shouldn't affect anyone, because it was meant to be used only internally.
 

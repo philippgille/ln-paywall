@@ -11,7 +11,7 @@ Middlewares for:
 - [X] [net/http](https://golang.org/pkg/net/http/) `Handler`
 	- Compatible with routers like [gorilla/mux](https://github.com/gorilla/mux) and [chi](https://github.com/go-chi/chi)
 - [X] [Gin](https://github.com/gin-gonic/gin)
-- [ ] [Echo](https://github.com/labstack/echo)
+- [X] [Echo](https://github.com/labstack/echo)
 
 An API gateway is on the roadmap as well, which you can use to monetize your API that's written in *any* language, not just in Go.
 
@@ -157,9 +157,14 @@ func main() {
 	r.GET("/ping", func(c *gin.Context) {
 		c.String(200, "pong")
 	})
+	
 	r.Run() // listen and serve on 0.0.0.0:8080
 }
 ```
+
+### Echo
+
+See [example](examples/echo/main.go)
 
 Related Projects
 ----------------

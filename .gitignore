@@ -10,3 +10,9 @@
 
 # Output of the go coverage tool, specifically when used with LiteIDE
 *.out
+
+## Own
+
+# lnd connection files
+invoice.macaroon
+tls.cert
