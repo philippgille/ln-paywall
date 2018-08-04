@@ -8,14 +8,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) a
 vNext
 -----
 
-Enhancements:
-
 - Added: `pay.NewEchoMiddleware(...)` - A middleware factory function for [Echo](https://github.com/labstack/echo) (issue [#2](https://github.com/philippgille/ln-paywall/issues/2))
+- Fixed: Success log message mentioned "HandlerFunc" in all middlewares despite it not always being a HandlerFunc
 
 v0.2.0 (2018-07-29)
 -------------------
-
-Enhancements:
 
 - Added: Interface `pay.StorageClient` - an abstraction for multiple storage clients, which allows you to write your own storage client for storing the preimages that have already been used as payment proof in a request (issue [#1](https://github.com/philippgille/ln-paywall/issues/1))
     - Methods `WasUsed(string) (bool, error)` and `SetUsed(string) error`

@@ -39,18 +39,18 @@ type LNDoptions struct {
 // NewHandlerFuncMiddleware returns a function which you can use within an http.HandlerFunc chain.
 func NewHandlerFuncMiddleware(invoiceOptions InvoiceOptions, lndOptions LNDoptions, storageClient StorageClient) func(http.HandlerFunc) http.HandlerFunc {
 	return func(next http.HandlerFunc) http.HandlerFunc {
-		return createHandlerFunc(invoiceOptions, lndOptions, storageClient, next)
+		return createHandlerFunc(invoiceOptions, lndOptions, storageClient, next, "HandlerFunc")
 	}
 }
 
 // NewHandlerMiddleware returns a function which you can use within an http.Handler chain.
 func NewHandlerMiddleware(invoiceOptions InvoiceOptions, lndOptions LNDoptions, storageClient StorageClient) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
-		return http.HandlerFunc(createHandlerFunc(invoiceOptions, lndOptions, storageClient, next.ServeHTTP))
+		return http.HandlerFunc(createHandlerFunc(invoiceOptions, lndOptions, storageClient, next.ServeHTTP, "Handler"))
 	}
 }
 
-func createHandlerFunc(invoiceOptions InvoiceOptions, lndOptions LNDoptions, storageClient StorageClient, next http.HandlerFunc) func(w http.ResponseWriter, r *http.Request) {
+func createHandlerFunc(invoiceOptions InvoiceOptions, lndOptions LNDoptions, storageClient StorageClient, next http.HandlerFunc, handlingType string) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// Check if the request contains a header with the preimage that we need to check if the requester paid
 		preimage := r.Header.Get("x-preimage")
@@ -84,7 +84,7 @@ func createHandlerFunc(invoiceOptions InvoiceOptions, lndOptions LNDoptions, sto
 				} else {
 					preimageHash, err := ln.HashPreimage(preimage)
 					if err == nil {
-						stdOutLogger.Printf("The provided preimage is valid. Continuing to the next HandlerFunc. Preimage hash: %v\n", preimageHash)
+						stdOutLogger.Printf("The provided preimage is valid. Continuing to the next %v. Preimage hash: %v\n", handlingType, preimageHash)
 					}
 					next.ServeHTTP(w, r)
 				}
@@ -131,7 +131,7 @@ func NewGinMiddleware(invoiceOptions InvoiceOptions, lndOptions LNDoptions, stor
 				} else {
 					preimageHash, err := ln.HashPreimage(preimage)
 					if err == nil {
-						stdOutLogger.Printf("The provided preimage is valid. Continuing to the next HandlerFunc. Preimage hash: %v\n", preimageHash)
+						stdOutLogger.Printf("The provided preimage is valid. Continuing to the next handler. Preimage hash: %v\n", preimageHash)
 					}
 					ctx.Next()
 				}
