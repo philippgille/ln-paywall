@@ -24,6 +24,7 @@ Contents
 - [Usage](#usage)
     - [net/http HandlerFunc](#nethttp-HandlerFunc)
     - [Gin](#gin)
+    - [gorilla/mux](#gorillamux)
 - [Related projects](#related-projects)
 
 Purpose
@@ -114,6 +115,10 @@ func main() {
 	r.Run() // listen and serve on 0.0.0.0:8080
 }
 ```
+
+### gorilla/mux
+
+See [example](examples/gorilla-mux/main.go).
 
 ### net/http HandlerFunc
 
