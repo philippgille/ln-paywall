@@ -66,7 +66,7 @@ There are currently two prerequisites:
 	- If you don't run it locally, it needs to listen to connections from external machines (so for example on 0.0.0.0 instead of localhost) and has the TLS certificate configured to include the external IP address of the node.
 2. A supported storage mechanism. It's used to cache preimages that have been used as a payment for an API call, so that a user can't do multiple requests with the same preimage of a settled Lightning payment. The `pay` package currently provides factory functions for the following storages:
 	- [Redis](https://redis.io/)
-		- Run for example with Docker: `docker run -d redis`
+		- Run for example with Docker: `docker run -p 6379:6379 -d redis`
 			- Note: In production you should use a configuration with password!
 	- A simple Go map
 		- Disadvantage: Doesn't persist data, so when you restart your server, users can re-use old preimages
