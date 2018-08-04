@@ -9,7 +9,7 @@ Middlewares for:
 
 - [X] [net/http](https://golang.org/pkg/net/http/) `HandlerFunc`
 - [X] [net/http](https://golang.org/pkg/net/http/) `Handler`
-	- Compatible with routers like [gorilla/mux](https://github.com/gorilla/mux) and [chi](https://github.com/go-chi/chi)
+	- Compatible with routers like [gorilla/mux](https://github.com/gorilla/mux), [httprouter](https://github.com/julienschmidt/httprouter) and [chi](https://github.com/go-chi/chi)
 - [X] [Gin](https://github.com/gin-gonic/gin)
 - [X] [Echo](https://github.com/labstack/echo)
 
