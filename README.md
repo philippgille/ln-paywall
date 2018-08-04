@@ -22,9 +22,10 @@ Contents
 - [How it works](#how-it-works)
 - [Prerequisites](#prerequisites)
 - [Usage](#usage)
-    - [net/http HandlerFunc](#nethttp-HandlerFunc)
     - [Gin](#gin)
     - [gorilla/mux](#gorillamux)
+    - [net/http HandlerFunc](#nethttp-HandlerFunc)
+    - [Echo](#echo)
 - [Related projects](#related-projects)
 
 Purpose
@@ -87,8 +88,9 @@ The best way to see how to use `ln-paywall` is by example. In the below examples
 package main
 
 import (
-	"github.com/gin-gonic/gin"
+	"net/http"
 
+	"github.com/gin-gonic/gin"
 	"github.com/philippgille/ln-paywall/pay"
 )
 
@@ -109,7 +111,7 @@ func main() {
 	r.Use(pay.NewGinMiddleware(invoiceOptions, lndOptions, redisClient))
 
 	r.GET("/ping", func(c *gin.Context) {
-		c.String(200, "pong")
+		c.String(http.StatusOK, "pong")
 	})
 	
 	r.Run() // listen and serve on 0.0.0.0:8080

@@ -4,7 +4,6 @@ import (
 	"net/http"
 
 	"github.com/labstack/echo"
-
 	"github.com/philippgille/ln-paywall/pay"
 )
 

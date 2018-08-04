@@ -1,8 +1,9 @@
 package main
 
 import (
-	"github.com/gin-gonic/gin"
+	"net/http"
 
+	"github.com/gin-gonic/gin"
 	"github.com/philippgille/ln-paywall/pay"
 )
 
@@ -23,7 +24,7 @@ func main() {
 	r.Use(pay.NewGinMiddleware(invoiceOptions, lndOptions, redisClient))
 
 	r.GET("/ping", func(c *gin.Context) {
-		c.String(200, "pong")
+		c.String(http.StatusOK, "pong")
 	})
 
 	r.Run() // listen and serve on 0.0.0.0:8080
