@@ -51,13 +51,16 @@ func NewHandlerMiddleware(invoiceOptions InvoiceOptions, lndOptions LNDoptions, 
 }
 
 func createHandlerFunc(invoiceOptions InvoiceOptions, lndOptions LNDoptions, storageClient StorageClient, next http.HandlerFunc, handlingType string) func(w http.ResponseWriter, r *http.Request) {
+	client, err := ln.NewLNDclient(lndOptions.Address, lndOptions.CertFile, lndOptions.MacaroonFile)
+	if err != nil {
+		panic(err)
+	}
 	return func(w http.ResponseWriter, r *http.Request) {
 		// Check if the request contains a header with the preimage that we need to check if the requester paid
 		preimage := r.Header.Get("x-preimage")
 		if preimage == "" {
 			// Generate the invoice
-			invoice, err := ln.GenerateInvoice(invoiceOptions.Amount, invoiceOptions.Memo,
-				lndOptions.Address, lndOptions.CertFile, lndOptions.MacaroonFile)
+			invoice, err := client.GenerateInvoice(invoiceOptions.Amount, invoiceOptions.Memo)
 			if err != nil {
 				errorMsg := fmt.Sprintf("Couldn't generate invoice: %+v", err)
 				log.Println(errorMsg)
@@ -72,7 +75,7 @@ func createHandlerFunc(invoiceOptions InvoiceOptions, lndOptions LNDoptions, sto
 			}
 		} else {
 			// Check if the provided preimage belongs to a settled API payment invoice and that it wasn't already used and store used preimages
-			ok, err := handlePreimage(preimage, lndOptions.Address, lndOptions.CertFile, lndOptions.MacaroonFile, storageClient)
+			ok, err := handlePreimage(preimage, storageClient, client)
 			if err != nil {
 				errorMsg := fmt.Sprintf("An error occured during checking the preimage: %+v", err)
 				log.Printf("%v\n", errorMsg)
@@ -95,13 +98,16 @@ func createHandlerFunc(invoiceOptions InvoiceOptions, lndOptions LNDoptions, sto
 
 // NewGinMiddleware returns a Gin middleware in the form of a gin.HandlerFunc.
 func NewGinMiddleware(invoiceOptions InvoiceOptions, lndOptions LNDoptions, storageClient StorageClient) gin.HandlerFunc {
+	client, err := ln.NewLNDclient(lndOptions.Address, lndOptions.CertFile, lndOptions.MacaroonFile)
+	if err != nil {
+		panic(err)
+	}
 	return func(ctx *gin.Context) {
 		// Check if the request contains a header with the preimage that we need to check if the requester paid
 		preimage := ctx.GetHeader("x-preimage")
 		if preimage == "" {
 			// Generate the invoice
-			invoice, err := ln.GenerateInvoice(invoiceOptions.Amount, invoiceOptions.Memo,
-				lndOptions.Address, lndOptions.CertFile, lndOptions.MacaroonFile)
+			invoice, err := client.GenerateInvoice(invoiceOptions.Amount, invoiceOptions.Memo)
 			if err != nil {
 				errorMsg := fmt.Sprintf("Couldn't generate invoice: %+v", err)
 				log.Println(errorMsg)
@@ -117,7 +123,7 @@ func NewGinMiddleware(invoiceOptions InvoiceOptions, lndOptions LNDoptions, stor
 			}
 		} else {
 			// Check if the provided preimage belongs to a settled API payment invoice and that it wasn't already used and store used preimages
-			ok, err := handlePreimage(preimage, lndOptions.Address, lndOptions.CertFile, lndOptions.MacaroonFile, storageClient)
+			ok, err := handlePreimage(preimage, storageClient, client)
 			if err != nil {
 				errorMsg := fmt.Sprintf("An error occured during checking the preimage: %+v", err)
 				log.Printf("%v\n", errorMsg)
@@ -142,6 +148,10 @@ func NewGinMiddleware(invoiceOptions InvoiceOptions, lndOptions LNDoptions, stor
 
 // NewEchoMiddleware returns an Echo middleware in the form of an echo.MiddlewareFunc.
 func NewEchoMiddleware(invoiceOptions InvoiceOptions, lndOptions LNDoptions, storageClient StorageClient, skipper middleware.Skipper) echo.MiddlewareFunc {
+	client, err := ln.NewLNDclient(lndOptions.Address, lndOptions.CertFile, lndOptions.MacaroonFile)
+	if err != nil {
+		panic(err)
+	}
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		if skipper == nil {
 			skipper = middleware.DefaultSkipper
@@ -154,8 +164,7 @@ func NewEchoMiddleware(invoiceOptions InvoiceOptions, lndOptions LNDoptions, sto
 			preimage := ctx.Request().Header.Get("x-preimage")
 			if preimage == "" {
 				// Generate the invoice
-				invoice, err := ln.GenerateInvoice(invoiceOptions.Amount, invoiceOptions.Memo,
-					lndOptions.Address, lndOptions.CertFile, lndOptions.MacaroonFile)
+				invoice, err := client.GenerateInvoice(invoiceOptions.Amount, invoiceOptions.Memo)
 				if err != nil {
 					errorMsg := fmt.Sprintf("Couldn't generate invoice: %+v", err)
 					log.Println(errorMsg)
@@ -177,7 +186,7 @@ func NewEchoMiddleware(invoiceOptions InvoiceOptions, lndOptions LNDoptions, sto
 				}
 			} else {
 				// Check if the provided preimage belongs to a settled API payment invoice and that it wasn't already used and store used preimages
-				ok, err := handlePreimage(preimage, lndOptions.Address, lndOptions.CertFile, lndOptions.MacaroonFile, storageClient)
+				ok, err := handlePreimage(preimage, storageClient, client)
 				if err != nil {
 					errorMsg := fmt.Sprintf("An error occured during checking the preimage: %+v", err)
 					log.Printf("%v\n", errorMsg)
@@ -216,6 +225,13 @@ type StorageClient interface {
 	SetUsed(string) error
 }
 
+// LNclient is an abstraction of a client that connects to a Lightning Network node implementation (like lnd, c-lightning and eclair)
+// and provides the methods required by the paywall.
+type LNclient interface {
+	GenerateInvoice(int64, string) (string, error)
+	CheckInvoice(string) (bool, error)
+}
+
 // handlePreimage does four things:
 // 1) Checks if the preimage was already used as a payment proof before.
 // 2) Checks if the preimage corresponds to an existing invoice on the connected lnd.
@@ -223,7 +239,7 @@ type StorageClient interface {
 // 4) Store the preimage to the storage for future checks.
 // Returns false and an empty error if the preimage was already used or if the corresponding invoice isn't settled.
 // Returns true and an empty error if everythings's fine.
-func handlePreimage(preimage string, address string, certFile string, macaroonFile string, storageClient StorageClient) (bool, error) {
+func handlePreimage(preimage string, storageClient StorageClient, lndClient LNclient) (bool, error) {
 	// Check if it was already used before
 	wasUsed, err := storageClient.WasUsed(preimage)
 	if err != nil {
@@ -235,7 +251,7 @@ func handlePreimage(preimage string, address string, certFile string, macaroonFi
 	}
 
 	// Check if a corresponding invoice exists and is settled
-	settled, err := ln.CheckInvoice(preimage, address, certFile, macaroonFile)
+	settled, err := lndClient.CheckInvoice(preimage)
 	if err != nil {
 		return false, err
 	}

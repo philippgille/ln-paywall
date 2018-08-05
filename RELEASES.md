@@ -9,7 +9,21 @@ vNext
 -----
 
 - Added: `pay.NewEchoMiddleware(...)` - A middleware factory function for [Echo](https://github.com/labstack/echo) (issue [#2](https://github.com/philippgille/ln-paywall/issues/2))
+- Added: `pay.LNclient` - An abstraction of a client that connects to a Lightning Network node implementation (like lnd, c-lightning and eclair)
+    - Implemented for issue [#4](https://github.com/philippgille/ln-paywall/issues/4), but will be useful for issue [#6](https://github.com/philippgille/ln-paywall/issues/6) as well
+- Added: `ln.LNDclient` - Implements the `pay.LNclient` interface (issue [#4](https://github.com/philippgille/ln-paywall/issues/4))
+    - Factory function `ln.NewLNDclient(...)`
+- Improved: Increased middleware performance by reusing the gRPC connection to the lnd backend (issue [#4](https://github.com/philippgille/ln-paywall/issues/4))
+    - With the same setup (local Gin web service, `pay.GoMap` as storage client, remote lnd, same hardware) it took about 100ms per request before, and takes about 25ms per request now. Measured from the arrival of the initial request until the sending of the response with the Lightning invoice (as logged by Gin).
 - Fixed: Success log message mentioned "HandlerFunc" in all middlewares despite it not always being a HandlerFunc
+
+Breaking changes:
+
+- Removed `ln.NewLightningClient(...)` - Not required anymore after adding the much more usable `ln.NewLNDclient(...)`.
+- Changed `ln.GenerateInvoice(...)` from being a function to being a method of `ln.LNDclient` and removed all lnd connection-related parameters which are part of the `LNDclient`. (issue [#4](https://github.com/philippgille/ln-paywall/issues/4))
+- Changed `ln.CheckInvoice(...)` from being a function to being a method of `ln.LNDclient` and removed all lnd connection-related parameters which are part of the `LNDclient`. (issue [#4](https://github.com/philippgille/ln-paywall/issues/4))
+
+None of these changes should affect anyone, because they took place in the `ln` package, which is meant to be used only internally.
 
 v0.2.0 (2018-07-29)
 -------------------
