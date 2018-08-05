@@ -64,7 +64,7 @@ func createHandlerFunc(invoiceOptions InvoiceOptions, lndOptions LNDoptions, sto
 			if err != nil {
 				errorMsg := fmt.Sprintf("Couldn't generate invoice: %+v", err)
 				log.Println(errorMsg)
-				http.Error(w, errorMsg, http.StatusBadRequest)
+				http.Error(w, errorMsg, http.StatusInternalServerError)
 			} else {
 				stdOutLogger.Printf("Sending invoice in response: %v", invoice)
 				// Note: w.Header().Set(...) must be called before w.WriteHeader(...)!
@@ -79,7 +79,7 @@ func createHandlerFunc(invoiceOptions InvoiceOptions, lndOptions LNDoptions, sto
 			if err != nil {
 				errorMsg := fmt.Sprintf("An error occured during checking the preimage: %+v", err)
 				log.Printf("%v\n", errorMsg)
-				http.Error(w, errorMsg, http.StatusBadRequest)
+				http.Error(w, errorMsg, http.StatusInternalServerError)
 			} else {
 				if !ok {
 					log.Printf("The provided preimage is invalid: %v\n", preimage)
@@ -111,7 +111,7 @@ func NewGinMiddleware(invoiceOptions InvoiceOptions, lndOptions LNDoptions, stor
 			if err != nil {
 				errorMsg := fmt.Sprintf("Couldn't generate invoice: %+v", err)
 				log.Println(errorMsg)
-				http.Error(ctx.Writer, errorMsg, http.StatusBadRequest)
+				http.Error(ctx.Writer, errorMsg, http.StatusInternalServerError)
 				ctx.Abort()
 			} else {
 				stdOutLogger.Printf("Sending invoice in response: %v", invoice)
@@ -127,7 +127,7 @@ func NewGinMiddleware(invoiceOptions InvoiceOptions, lndOptions LNDoptions, stor
 			if err != nil {
 				errorMsg := fmt.Sprintf("An error occured during checking the preimage: %+v", err)
 				log.Printf("%v\n", errorMsg)
-				http.Error(ctx.Writer, errorMsg, http.StatusBadRequest)
+				http.Error(ctx.Writer, errorMsg, http.StatusInternalServerError)
 				ctx.Abort()
 			} else {
 				if !ok {
@@ -169,7 +169,7 @@ func NewEchoMiddleware(invoiceOptions InvoiceOptions, lndOptions LNDoptions, sto
 					errorMsg := fmt.Sprintf("Couldn't generate invoice: %+v", err)
 					log.Println(errorMsg)
 					return &echo.HTTPError{
-						Code:     http.StatusBadRequest,
+						Code:     http.StatusInternalServerError,
 						Message:  errorMsg,
 						Internal: err,
 					}
@@ -191,7 +191,7 @@ func NewEchoMiddleware(invoiceOptions InvoiceOptions, lndOptions LNDoptions, sto
 					errorMsg := fmt.Sprintf("An error occured during checking the preimage: %+v", err)
 					log.Printf("%v\n", errorMsg)
 					return &echo.HTTPError{
-						Code:     http.StatusBadRequest,
+						Code:     http.StatusInternalServerError,
 						Message:  errorMsg,
 						Internal: err,
 					}
