@@ -45,7 +45,7 @@ Until the rise of cryptocurrencies, if you wanted to monetize your API (set up a
 
 With cryptocurrencies in general some of those problems were solved, but with long confirmation times and per-transaction fees a real per-request billing was still not feasable.
 
-But then came the [Lightning Network](https://lightning.network/), an implementation of routed payment channels, which enables *real* **instant microtransactions** with **extremely low fees** (which cryptocurrencies have long promised, but never delivered). It's a *second layer* on top of existing cryptocurrencies like Bitcoin that scales far beyond the limitations of the underlying blockchain.
+But then came the [Lightning Network](https://lightning.network/), an implementation of routed payment channels, which enables *real* **instant microtransactions** with **extremely low fees**, which cryptocurrencies have long promised, but never delivered. It's a *second layer* on top of existing cryptocurrencies like Bitcoin that scales far beyond the limitations of the underlying blockchain.
 
 `ln-paywall` makes it easy to set up an API paywall for payments over the Lightning Network.
 
@@ -68,9 +68,9 @@ There are currently two prerequisites:
 	- A simple Go map
 		- The fastest option, but 1) can't be used across horizontally scaled service instances and 2) doesn't persist data, so when you restart your server, users can re-use old preimages
 	- [bbolt](https://github.com/coreos/bbolt) - a fork of [Bolt](https://github.com/boltdb/bolt) maintained by CoreOS
-		- Very fast and doesn't require any remote or local TCP connections and persists the data, but can't be used across horizontally scaled service instances because it's file-based. Production-ready for single-instance web services though.
+		- Very fast, doesn't require any remote or local TCP connections and persists the data, but can't be used across horizontally scaled service instances because it's file-based. Production-ready for single-instance web services though.
 	- [Redis](https://redis.io/)
-		- Although slowest of these options, still blazing fast and most suited for popular web services: Requires a remote or local TCP connection and some administration, but allows data persistency and can even be used with a horizontally scaled web service
+		- Although the slowest of these options, still fast and most suited for popular web services: Requires a remote or local TCP connection and some administration, but allows data persistency and can even be used with a horizontally scaled web service
 		- Run for example with Docker: `docker run -p 6379:6379 -d redis`
 			- Note: In production you should use a configuration with password (check out [`bitnami/redis`](https://hub.docker.com/r/bitnami/redis/) which makes that easy)!
 	- Roll your own!
@@ -135,8 +135,9 @@ Related Projects
 
 - [https://github.com/ElementsProject/paypercall](https://github.com/ElementsProject/paypercall)
     - Middleware for the JavaScript web framework [Express](https://expressjs.com/)
-    - Reverse proxy
+    - Can also act as reverse proxy for web services that aren't written in JavaScript
     - Payment: Lightning Network
+    - Backend: c-lightning only (no lnd)
 - [https://github.com/interledgerjs/koa-web-monetization](https://github.com/interledgerjs/koa-web-monetization)
     - Middleware for the JavaScript web framework [Koa](https://koajs.com/)
     - Payment: Interledger
