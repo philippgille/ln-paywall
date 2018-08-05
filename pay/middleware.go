@@ -18,22 +18,40 @@ var stdOutLogger = log.New(os.Stdout, "", log.LstdFlags)
 
 // InvoiceOptions are the options for an invoice.
 type InvoiceOptions struct {
-	// Amount of Satoshis you want to have paid for one API call
-	Amount int64
+	// Amount of Satoshis you want to have paid for one API call.
+	// Values below 1 are automatically changed to the default value.
+	// Optional (1 by default).
+	Price int64
 	// Note to be shown on the invoice,
 	// for example: "API call to api.example.com".
-	// Optional ("API call" by default)
+	// Optional ("" by default).
 	Memo string
+}
+
+// DefaultInvoiceOptions provides default values for InvoiceOptions.
+var DefaultInvoiceOptions = InvoiceOptions{
+	Price: 1,
+	Memo:  "API call",
 }
 
 // LNDoptions are the options for the connection to the lnd node.
 type LNDoptions struct {
-	// Address of your LND node, including the port
+	// Address of your LND node, including the port.
+	// Optional ("localhost:10009" by default).
 	Address string
-	// Path to the "tls.cert" file that your LND node uses
+	// Path to the "tls.cert" file that your LND node uses.
+	// Optional ("tls.cert" by default).
 	CertFile string
-	// Path to the "invoice.macaroon" file that your LND node uses
+	// Path to the "invoice.macaroon" file that your LND node uses.
+	// Optional ("invoice.macaroon" by default).
 	MacaroonFile string
+}
+
+// DefaultLNDoptions provides default values for LNDoptions.
+var DefaultLNDoptions = LNDoptions{
+	Address:      "localhost:10009",
+	CertFile:     "tls.cert",
+	MacaroonFile: "invoice.macaroon",
 }
 
 // NewHandlerFuncMiddleware returns a function which you can use within an http.HandlerFunc chain.
@@ -51,6 +69,7 @@ func NewHandlerMiddleware(invoiceOptions InvoiceOptions, lndOptions LNDoptions, 
 }
 
 func createHandlerFunc(invoiceOptions InvoiceOptions, lndOptions LNDoptions, storageClient StorageClient, next http.HandlerFunc, handlingType string) func(w http.ResponseWriter, r *http.Request) {
+	invoiceOptions, lndOptions = assignDefaultValues(invoiceOptions, lndOptions)
 	client, err := ln.NewLNDclient(lndOptions.Address, lndOptions.CertFile, lndOptions.MacaroonFile)
 	if err != nil {
 		panic(err)
@@ -60,7 +79,7 @@ func createHandlerFunc(invoiceOptions InvoiceOptions, lndOptions LNDoptions, sto
 		preimage := r.Header.Get("x-preimage")
 		if preimage == "" {
 			// Generate the invoice
-			invoice, err := client.GenerateInvoice(invoiceOptions.Amount, invoiceOptions.Memo)
+			invoice, err := client.GenerateInvoice(invoiceOptions.Price, invoiceOptions.Memo)
 			if err != nil {
 				errorMsg := fmt.Sprintf("Couldn't generate invoice: %+v", err)
 				log.Println(errorMsg)
@@ -98,6 +117,7 @@ func createHandlerFunc(invoiceOptions InvoiceOptions, lndOptions LNDoptions, sto
 
 // NewGinMiddleware returns a Gin middleware in the form of a gin.HandlerFunc.
 func NewGinMiddleware(invoiceOptions InvoiceOptions, lndOptions LNDoptions, storageClient StorageClient) gin.HandlerFunc {
+	invoiceOptions, lndOptions = assignDefaultValues(invoiceOptions, lndOptions)
 	client, err := ln.NewLNDclient(lndOptions.Address, lndOptions.CertFile, lndOptions.MacaroonFile)
 	if err != nil {
 		panic(err)
@@ -107,7 +127,7 @@ func NewGinMiddleware(invoiceOptions InvoiceOptions, lndOptions LNDoptions, stor
 		preimage := ctx.GetHeader("x-preimage")
 		if preimage == "" {
 			// Generate the invoice
-			invoice, err := client.GenerateInvoice(invoiceOptions.Amount, invoiceOptions.Memo)
+			invoice, err := client.GenerateInvoice(invoiceOptions.Price, invoiceOptions.Memo)
 			if err != nil {
 				errorMsg := fmt.Sprintf("Couldn't generate invoice: %+v", err)
 				log.Println(errorMsg)
@@ -148,6 +168,7 @@ func NewGinMiddleware(invoiceOptions InvoiceOptions, lndOptions LNDoptions, stor
 
 // NewEchoMiddleware returns an Echo middleware in the form of an echo.MiddlewareFunc.
 func NewEchoMiddleware(invoiceOptions InvoiceOptions, lndOptions LNDoptions, storageClient StorageClient, skipper middleware.Skipper) echo.MiddlewareFunc {
+	invoiceOptions, lndOptions = assignDefaultValues(invoiceOptions, lndOptions)
 	client, err := ln.NewLNDclient(lndOptions.Address, lndOptions.CertFile, lndOptions.MacaroonFile)
 	if err != nil {
 		panic(err)
@@ -164,7 +185,7 @@ func NewEchoMiddleware(invoiceOptions InvoiceOptions, lndOptions LNDoptions, sto
 			preimage := ctx.Request().Header.Get("x-preimage")
 			if preimage == "" {
 				// Generate the invoice
-				invoice, err := client.GenerateInvoice(invoiceOptions.Amount, invoiceOptions.Memo)
+				invoice, err := client.GenerateInvoice(invoiceOptions.Price, invoiceOptions.Memo)
 				if err != nil {
 					errorMsg := fmt.Sprintf("Couldn't generate invoice: %+v", err)
 					log.Println(errorMsg)
@@ -266,4 +287,25 @@ func handlePreimage(preimage string, storageClient StorageClient, lndClient LNcl
 		return true, err
 	}
 	return true, nil
+}
+
+func assignDefaultValues(invoiceOptions InvoiceOptions, lndOptions LNDoptions) (InvoiceOptions, LNDoptions) {
+	// InvoiceOptions
+	if invoiceOptions.Price <= 0 {
+		invoiceOptions.Price = DefaultInvoiceOptions.Price
+	}
+	// Empty Memo is okay.
+
+	// LNDoptions
+	if lndOptions.Address == "" {
+		lndOptions.Address = DefaultLNDoptions.Address
+	}
+	if lndOptions.CertFile == "" {
+		lndOptions.CertFile = DefaultLNDoptions.CertFile
+	}
+	if lndOptions.MacaroonFile == "" {
+		lndOptions.MacaroonFile = DefaultLNDoptions.MacaroonFile
+	}
+
+	return invoiceOptions, lndOptions
 }

@@ -101,17 +101,10 @@ func main() {
 	r := gin.Default()
 
 	// Configure and use middleware
-	invoiceOptions := pay.InvoiceOptions{
-		Amount: 1,
-		Memo:   "Ping API call",
-	}
-	lndOptions := pay.LNDoptions{
-		Address:      "123.123.123.123:10009",
-		CertFile:     "tls.cert",
-		MacaroonFile: "invoice.macaroon",
-	}
-	redisClient := pay.NewRedisClient(pay.DefaultRedisOptions) // Connects to localhost:6379
-	r.Use(pay.NewGinMiddleware(invoiceOptions, lndOptions, redisClient))
+	invoiceOptions := pay.DefaultInvoiceOptions // Price: 1 Satoshi; Memo: "API call"
+	lndOptions := pay.DefaultLNDoptions // Address: "localhost:10009", CertFile: "tls.cert", MacaroonFile: "invoice.macaroon"
+	storageClient := pay.NewGoMap()
+	r.Use(pay.NewGinMiddleware(invoiceOptions, lndOptions, storageClient))
 
 	r.GET("/ping", func(c *gin.Context) {
 		c.String(http.StatusOK, "pong")
@@ -120,6 +113,8 @@ func main() {
 	r.Run() // listen and serve on 0.0.0.0:8080
 }
 ```
+
+This example can also be found here: [example](examples/gin/main.go).
 
 ### gorilla/mux
 

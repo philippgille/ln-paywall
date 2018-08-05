@@ -21,18 +21,11 @@ func withLogging(next http.HandlerFunc) http.HandlerFunc {
 
 func main() {
 	// Configure middleware
-	invoiceOptions := pay.InvoiceOptions{
-		Amount: 1,
-		Memo:   "Ping API call",
-	}
-	lndOptions := pay.LNDoptions{
-		Address:      "123.123.123.123:10009",
-		CertFile:     "tls.cert",
-		MacaroonFile: "invoice.macaroon",
-	}
-	redisClient := pay.NewRedisClient(pay.DefaultRedisOptions) // Connects to localhost:6379
+	invoiceOptions := pay.DefaultInvoiceOptions // Price: 1 Satoshi; Memo: "API call"
+	lndOptions := pay.DefaultLNDoptions         // Address: "localhost:10009", CertFile: "tls.cert", MacaroonFile: "invoice.macaroon"
+	storageClient := pay.NewGoMap()
 	// Create function that we can use in the middleware chain
-	withPayment := pay.NewHandlerFuncMiddleware(invoiceOptions, lndOptions, redisClient)
+	withPayment := pay.NewHandlerFuncMiddleware(invoiceOptions, lndOptions, storageClient)
 
 	// Use a chain of middlewares for the "/ping" endpoint
 	http.HandleFunc("/ping", withLogging(withPayment(pongHandler)))

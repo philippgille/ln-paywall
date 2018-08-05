@@ -22,13 +22,17 @@ vNext
     - With the same setup (local Gin web service, `pay.GoMap` as storage client, remote lnd, same hardware) it took about 100ms per request before, and takes about 25ms per request now. Measured from the arrival of the initial request until the sending of the response with the Lightning invoice (as logged by Gin).
 - Fixed: Success log message mentioned "HandlerFunc" in all middlewares despite it not always being a HandlerFunc
 
-Breaking changes:
+### Breaking changes
 
-- Removed `ln.NewLightningClient(...)` - Not required anymore after adding the much more usable `ln.NewLNDclient(...)`.
-- Changed `ln.GenerateInvoice(...)` from being a function to being a method of `ln.LNDclient` and removed all lnd connection-related parameters which are part of the `LNDclient`. (issue [#4](https://github.com/philippgille/ln-paywall/issues/4))
+Package `pay`:
+
+- Changed: Renamed `pay.InvoiceOptions.Amount` to `pay.InvoiceOptions.Price` to avoid misunderstandings
+
+Package `ln` (none of these changes should affect anyone, because this package is meant to be used only internally):
+
+- Removed: `ln.NewLightningClient(...)` - Not required anymore after adding the much more usable `ln.NewLNDclient(...)`.
+- Changed: `ln.GenerateInvoice(...)` from being a function to being a method of `ln.LNDclient` and removed all lnd connection-related parameters which are part of the `LNDclient`. (issue [#4](https://github.com/philippgille/ln-paywall/issues/4))
 - Changed `ln.CheckInvoice(...)` from being a function to being a method of `ln.LNDclient` and removed all lnd connection-related parameters which are part of the `LNDclient`. (issue [#4](https://github.com/philippgille/ln-paywall/issues/4))
-
-None of these changes should affect anyone, because they took place in the `ln` package, which is meant to be used only internally.
 
 v0.2.0 (2018-07-29)
 -------------------
@@ -43,11 +47,16 @@ v0.2.0 (2018-07-29)
 - Improved: Increased middleware performance and decreased load on the connected lnd when invalid requests with the `x-preimage` header are received (invalid because the preimage was already used) - Instead of first getting a corresponding invoice for a preimage from the lnd and *then* checking if the preimage was used already, the order of these operations was switched, because then, if the preimage was already used, no request to lnd needs to be made anymore.
 - Improved: All fields of the struct `pay.RedisOptions` are now optional
 
-Breaking changes:
+### Breaking changes
+
+Package `pay`:
 
 - Changed: `pay.NewHandlerFuncMiddleware(...)`, `pay.NewHandlerMiddleware(...)` and `pay.NewGinMiddleware(...)` now take a `ln.StorageClient` instead of a `*redis.Client` as parameter (issue [#1](https://github.com/philippgille/ln-paywall/issues/1))
-- Changed: `ln.CheckPreimage(...)` was renamed to `ln.CheckInvoice(...)` and doesn't check the storage anymore. The `ln` methods are supposed to just handle lightning related things and nothing else. This shouldn't affect anyone, because `ln` is meant to be used only internally.
-- Removed: Package `lnrpc` - Instead of using our own generated lnd gRPC Go file, import the one from Lightning Labs. This shouldn't affect anyone, because it was meant to be used only internally.
+
+Package `ln` (none of these changes should affect anyone, because this package is meant to be used only internally):
+
+- Changed: `ln.CheckPreimage(...)` was renamed to `ln.CheckInvoice(...)` and doesn't check the storage anymore. The `ln` methods are supposed to just handle lightning related things and nothing else.
+- Removed: Package `lnrpc` - Instead of using our own generated lnd gRPC Go file, import the one from Lightning Labs.
 
 v0.1.0 (2018-07-02)
 -------------------

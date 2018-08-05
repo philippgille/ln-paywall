@@ -61,9 +61,6 @@ func NewLNDclient(address string, certFile string, macaroonFile string) (LNDclie
 // GenerateInvoice generates an invoice with the given price and memo.
 func (c LNDclient) GenerateInvoice(amount int64, memo string) (string, error) {
 	// Create the request and send it
-	if memo == "" {
-		memo = "API call"
-	}
 	invoice := lnrpc.Invoice{
 		Memo:  memo,
 		Value: amount,

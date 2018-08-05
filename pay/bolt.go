@@ -49,7 +49,8 @@ func (c BoltClient) SetUsed(preimage string) error {
 
 // BoltOptions are the options for the BoltClient.
 type BoltOptions struct {
-	// Path of the DB file, optional ("ln-paywall.db" by default)
+	// Path of the DB file.
+	// Optional ("ln-paywall.db" by default).
 	Path string
 }
 

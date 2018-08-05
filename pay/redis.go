@@ -32,11 +32,14 @@ func (c RedisClient) SetUsed(preimage string) error {
 
 // RedisOptions are the options for the Redis DB.
 type RedisOptions struct {
-	// Address of the Redis server, including the port, optional ("localhost:6379" by default)
+	// Address of the Redis server, including the port.
+	// Optional ("localhost:6379" by default).
 	Address string
-	// Password for the Redis server, optional ("" by default)
+	// Password for the Redis server.
+	// Optional ("" by default).
 	Password string
-	// DB to use, optional (0 by default)
+	// DB to use.
+	// Optional (0 by default).
 	DB int
 }
 
@@ -51,7 +54,7 @@ var DefaultRedisOptions = RedisOptions{
 func NewRedisClient(redisOptions RedisOptions) RedisClient {
 	// Set default values
 	if redisOptions.Address == "" {
-		redisOptions.Address = "localhost:6379"
+		redisOptions.Address = DefaultRedisOptions.Address
 	}
 	return RedisClient{
 		c: redis.NewClient(&redis.Options{
