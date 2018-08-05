@@ -9,6 +9,11 @@ vNext
 -----
 
 - Added: `pay.NewEchoMiddleware(...)` - A middleware factory function for [Echo](https://github.com/labstack/echo) (issue [#2](https://github.com/philippgille/ln-paywall/issues/2))
+- Added: Bolt DB client (issue [#3](https://github.com/philippgille/ln-paywall/issues/3))
+    - Struct `pay.BoltClient` - Implements the `StorageClient` interface
+    - Factory function `NewBoltClient(...)`
+    - Struct `pay.BoltOptions` - Options for the `BoltClient`
+    - Var `pay.DefaultBoltOptions` - a `BoltOptions` object with default values
 - Added: `pay.LNclient` - An abstraction of a client that connects to a Lightning Network node implementation (like lnd, c-lightning and eclair)
     - Implemented for issue [#4](https://github.com/philippgille/ln-paywall/issues/4), but will be useful for issue [#6](https://github.com/philippgille/ln-paywall/issues/6) as well
 - Added: `ln.LNDclient` - Implements the `pay.LNclient` interface (issue [#4](https://github.com/philippgille/ln-paywall/issues/4))
@@ -32,7 +37,7 @@ v0.2.0 (2018-07-29)
     - Methods `WasUsed(string) (bool, error)` and `SetUsed(string) error`
 - Added: Struct `pay.RedisClient` - implements the `StorageClient` interface (issue [#1](https://github.com/philippgille/ln-paywall/issues/1))
     - Factory function `NewRedisClient(...)`
-- Added: Var `pay.DefaultRedisOptions` - a `Redisoptions` object with default values
+- Added: Var `pay.DefaultRedisOptions` - a `RedisOptions` object with default values
 - Added: Struct `pay.GoMap` - implements the `StorageClient` interface (issue [#1](https://github.com/philippgille/ln-paywall/issues/1))
     - Factory function `NewGoMap()`
 - Improved: Increased middleware performance and decreased load on the connected lnd when invalid requests with the `x-preimage` header are received (invalid because the preimage was already used) - Instead of first getting a corresponding invoice for a preimage from the lnd and *then* checking if the preimage was used already, the order of these operations was switched, because then, if the preimage was already used, no request to lnd needs to be made anymore.

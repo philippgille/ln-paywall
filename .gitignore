@@ -16,3 +16,7 @@
 # lnd connection files
 invoice.macaroon
 tls.cert
+
+# bbolt DB files
+ln-paywall.db
+ln-paywall.db.lock

@@ -65,13 +65,16 @@ There are currently two prerequisites:
 1. A running [lnd](https://github.com/lightningnetwork/lnd) node which listens to gRPC connections
 	- If you don't run it locally, it needs to listen to connections from external machines (so for example on 0.0.0.0 instead of localhost) and has the TLS certificate configured to include the external IP address of the node.
 2. A supported storage mechanism. It's used to cache preimages that have been used as a payment for an API call, so that a user can't do multiple requests with the same preimage of a settled Lightning payment. The `pay` package currently provides factory functions for the following storages:
-	- [Redis](https://redis.io/)
-		- Run for example with Docker: `docker run -p 6379:6379 -d redis`
-			- Note: In production you should use a configuration with password!
 	- A simple Go map
-		- Disadvantage: Doesn't persist data, so when you restart your server, users can re-use old preimages
+		- The fastest option, but 1) can't be used across horizontally scaled service instances and 2) doesn't persist data, so when you restart your server, users can re-use old preimages
+	- [bbolt](https://github.com/coreos/bbolt) - a fork of [Bolt](https://github.com/boltdb/bolt) maintained by CoreOS
+		- Very fast and doesn't require any remote or local TCP connections and persists the data, but can't be used across horizontally scaled service instances because it's file-based. Production-ready for single-instance web services though.
+	- [Redis](https://redis.io/)
+		- Although slowest of these options, still blazing fast and most suited for popular web services: Requires a remote or local TCP connection and some administration, but allows data persistency and can even be used with a horizontally scaled web service
+		- Run for example with Docker: `docker run -p 6379:6379 -d redis`
+			- Note: In production you should use a configuration with password (check out [`bitnami/redis`](https://hub.docker.com/r/bitnami/redis/) which makes that easy)!
 	- Roll your own!
-		- Just implement the simple `ln.StorageClient` interface (only two methods!)
+		- Just implement the simple `pay.StorageClient` interface (only two methods!)
 
 Usage
 -----
