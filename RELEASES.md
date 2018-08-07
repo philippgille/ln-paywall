@@ -21,6 +21,7 @@ vNext
 - Improved: Increased middleware performance by reusing the gRPC connection to the lnd backend (issue [#4](https://github.com/philippgille/ln-paywall/issues/4))
     - With the same setup (local Gin web service, `pay.GoMap` as storage client, remote lnd, same hardware) it took about 100ms per request before, and takes about 25ms per request now. Measured from the arrival of the initial request until the sending of the response with the Lightning invoice (as logged by Gin).
 - Fixed: Success log message mentioned "HandlerFunc" in all middlewares despite it not always being a HandlerFunc
+- Fixed: A wrong HTTP status code was used in responses when an internal error occurred (`400 Bad Request` instead of `500 Internal Server Error`)
 
 ### Breaking changes
 
