@@ -8,6 +8,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) a
 vNext
 -----
 
+v0.3.0 (2018-08-12)
+-------------------
+
 - Added: `pay.NewEchoMiddleware(...)` - A middleware factory function for [Echo](https://github.com/labstack/echo) (issue [#2](https://github.com/philippgille/ln-paywall/issues/2))
 - Added: Bolt DB client (issue [#3](https://github.com/philippgille/ln-paywall/issues/3))
     - Struct `pay.BoltClient` - Implements the `StorageClient` interface
