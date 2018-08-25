@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/philippgille/ln-paywall/storage"
 	"github.com/philippgille/ln-paywall/wall"
 )
 
@@ -23,7 +24,7 @@ func main() {
 	// Configure middleware
 	invoiceOptions := wall.DefaultInvoiceOptions // Price: 1 Satoshi; Memo: "API call"
 	lndOptions := wall.DefaultLNDoptions         // Address: "localhost:10009", CertFile: "tls.cert", MacaroonFile: "invoice.macaroon"
-	storageClient := wall.NewGoMap()
+	storageClient := storage.NewGoMap()
 	// Create function that we can use in the middleware chain
 	withPayment := wall.NewHandlerFuncMiddleware(invoiceOptions, lndOptions, storageClient)
 

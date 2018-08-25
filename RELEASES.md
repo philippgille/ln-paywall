@@ -11,6 +11,7 @@ vNext
 ### Breaking changes
 
 - Changed: Renamed package from `pay` to `wall`
+- Changed: Moved all storage implementations to the new package `storage`
 
 v0.3.0 (2018-08-12)
 -------------------

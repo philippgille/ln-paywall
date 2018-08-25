@@ -1,8 +1,9 @@
-package wall_test
+package storage_test
 
 import (
 	"testing"
 
+	"github.com/philippgille/ln-paywall/storage"
 	"github.com/philippgille/ln-paywall/wall"
 )
 
@@ -12,7 +13,7 @@ func TestRedisClient(t *testing.T) {
 	t.SkipNow()
 	invoiceOptions := wall.InvoiceOptions{}
 	lndOptions := wall.LNDoptions{}
-	redisClient := wall.RedisClient{}
+	redisClient := storage.RedisClient{}
 	wall.NewHandlerFuncMiddleware(invoiceOptions, lndOptions, redisClient)
 	wall.NewHandlerMiddleware(invoiceOptions, lndOptions, redisClient)
 	wall.NewGinMiddleware(invoiceOptions, lndOptions, redisClient)

@@ -1,4 +1,4 @@
-package wall
+package storage
 
 import (
 	"github.com/go-redis/redis"

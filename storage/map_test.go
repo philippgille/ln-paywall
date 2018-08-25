@@ -1,8 +1,9 @@
-package wall_test
+package storage_test
 
 import (
 	"testing"
 
+	"github.com/philippgille/ln-paywall/storage"
 	"github.com/philippgille/ln-paywall/wall"
 )
 
@@ -12,7 +13,7 @@ func TestGoMap(t *testing.T) {
 	t.SkipNow()
 	invoiceOptions := wall.InvoiceOptions{}
 	lndOptions := wall.LNDoptions{}
-	goMap := wall.GoMap{}
+	goMap := storage.GoMap{}
 	wall.NewHandlerFuncMiddleware(invoiceOptions, lndOptions, goMap)
 	wall.NewHandlerMiddleware(invoiceOptions, lndOptions, goMap)
 	wall.NewGinMiddleware(invoiceOptions, lndOptions, goMap)
