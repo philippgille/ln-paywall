@@ -74,7 +74,7 @@ There are currently two prerequisites:
 		- Run for example with Docker: `docker run -p 6379:6379 -d redis`
 			- Note: In production you should use a configuration with password (check out [`bitnami/redis`](https://hub.docker.com/r/bitnami/redis/) which makes that easy)!
 	- Roll your own!
-		- Just implement the simple `pay.StorageClient` interface (only two methods!)
+		- Just implement the simple `wall.StorageClient` interface (only two methods!)
 
 Usage
 -----
@@ -94,17 +94,17 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/philippgille/ln-paywall/pay"
+	"github.com/philippgille/ln-paywall/wall"
 )
 
 func main() {
 	r := gin.Default()
 
 	// Configure and use middleware
-	invoiceOptions := pay.DefaultInvoiceOptions // Price: 1 Satoshi; Memo: "API call"
-	lndOptions := pay.DefaultLNDoptions // Address: "localhost:10009", CertFile: "tls.cert", MacaroonFile: "invoice.macaroon"
-	storageClient := pay.NewGoMap()
-	r.Use(pay.NewGinMiddleware(invoiceOptions, lndOptions, storageClient))
+	invoiceOptions := wall.DefaultInvoiceOptions // Price: 1 Satoshi; Memo: "API call"
+	lndOptions := wall.DefaultLNDoptions // Address: "localhost:10009", CertFile: "tls.cert", MacaroonFile: "invoice.macaroon"
+	storageClient := wall.NewGoMap()
+	r.Use(wall.NewGinMiddleware(invoiceOptions, lndOptions, storageClient))
 
 	r.GET("/ping", func(c *gin.Context) {
 		c.String(http.StatusOK, "pong")

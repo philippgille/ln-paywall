@@ -6,7 +6,7 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
-	"github.com/philippgille/ln-paywall/pay"
+	"github.com/philippgille/ln-paywall/wall"
 )
 
 func PingHandler(w http.ResponseWriter, r *http.Request) {
@@ -18,10 +18,10 @@ func main() {
 	r := mux.NewRouter()
 
 	// Configure and use middleware
-	invoiceOptions := pay.DefaultInvoiceOptions // Price: 1 Satoshi; Memo: "API call"
-	lndOptions := pay.DefaultLNDoptions         // Address: "localhost:10009", CertFile: "tls.cert", MacaroonFile: "invoice.macaroon"
-	storageClient := pay.NewGoMap()
-	r.Use(pay.NewHandlerMiddleware(invoiceOptions, lndOptions, storageClient))
+	invoiceOptions := wall.DefaultInvoiceOptions // Price: 1 Satoshi; Memo: "API call"
+	lndOptions := wall.DefaultLNDoptions         // Address: "localhost:10009", CertFile: "tls.cert", MacaroonFile: "invoice.macaroon"
+	storageClient := wall.NewGoMap()
+	r.Use(wall.NewHandlerMiddleware(invoiceOptions, lndOptions, storageClient))
 
 	r.HandleFunc("/ping", PingHandler)
 

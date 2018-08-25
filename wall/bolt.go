@@ -1,4 +1,4 @@
-package pay
+package wall
 
 import (
 	"sync"
@@ -64,12 +64,12 @@ var DefaultBoltOptions = BoltOptions{
 // Note: Bolt uses an exclusive write lock on the database file so it cannot be shared by multiple processes.
 // This shouldn't be a problem when you use one file for one middleware, like this:
 //  // ...
-//  boltClient, err := pay.NewBoltClient(pay.DefaultBoltOptions) // Uses file "ln-paywall.db"
+//  boltClient, err := wall.NewBoltClient(wall.DefaultBoltOptions) // Uses file "ln-paywall.db"
 //  if err != nil {
 //      panic(err)
 //  }
 //  defer boltClient.Close()
-//  r.Use(pay.NewGinMiddleware(invoiceOptions, lndOptions, boltClient))
+//  r.Use(wall.NewGinMiddleware(invoiceOptions, lndOptions, boltClient))
 //  // ...
 // Also don't worry about closing the Bolt DB, the middleware opens it once and uses it for the duration of its lifetime.
 // When the web service is stopped, the DB file lock is released automatically.

@@ -16,7 +16,7 @@ import (
 	"github.com/lightningnetwork/lnd/lnrpc"
 )
 
-// LNDclient is an implementation of the pay.Client interface for the lnd Lightning Network node implementation.
+// LNDclient is an implementation of the wall.Client interface for the lnd Lightning Network node implementation.
 type LNDclient struct {
 	lndClient lnrpc.LightningClient
 	ctx       context.Context

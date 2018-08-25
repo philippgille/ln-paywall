@@ -1,4 +1,4 @@
-package pay
+package wall
 
 import (
 	"github.com/go-redis/redis"
