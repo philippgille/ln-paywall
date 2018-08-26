@@ -43,9 +43,9 @@ Until the rise of cryptocurrencies, if you wanted to monetize your API (set up a
     - Data breaches / leaks
 3. Charge for a bunch of requests, like 10.000 at a time, because real per-request payments weren't possible
 
-With cryptocurrencies in general some of those problems were solved, but with long confirmation times and per-transaction fees a real per-request billing was still not feasable.
+With cryptocurrencies in general some of those problems were solved, but with long confirmation times and high per-transaction fees a real per-request billing was still not feasable.
 
-But then came the [Lightning Network](https://lightning.network/), an implementation of routed payment channels, which enables *real* **instant microtransactions** with **extremely low fees**, which cryptocurrencies have long promised, but never delivered. It's a *second layer* on top of existing cryptocurrencies like Bitcoin that scales far beyond the limitations of the underlying blockchain.
+But then came the [Lightning Network](https://lightning.network/), an implementation of routed payment channels, which enables *real* **near-instant microtransactions** with **extremely low fees**, which cryptocurrencies have long promised, but never delivered. It's a *second layer* on top of existing cryptocurrencies like Bitcoin that scales far beyond the limitations of the underlying blockchain.
 
 `ln-paywall` makes it easy to set up an API paywall for payments over the Lightning Network.
 
