@@ -9,7 +9,7 @@ You can either pick one from the storage package (https://www.godoc.org/github.c
 Usage
 
 Here's one example of a web service implemented with Gin.
-For more examples check out the "examples" directory in the GitHub repository of this package.
+For more examples check out the "examples" directory in the GitHub repository of this package (https://github.com/philippgille/ln-paywall/tree/master/examples).
 
 	package main
 
