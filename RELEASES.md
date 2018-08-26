@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) a
 vNext
 -----
 
+- Added: Package-level documentation
 - Improved: In case of an invalid preimage the error response is much more detailed now. It differentiates between several reasons why the preimage is invalid. Additionally more cases of invalid requests are detected now, so a proper `400 Bad Request` is returned instead of a `500 Internal Server Error`. (Issue [#11](https://github.com/philippgille/ln-paywall/issues/11))
 
 ### Breaking changes
