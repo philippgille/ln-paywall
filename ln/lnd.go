@@ -76,10 +76,10 @@ func (c LNDclient) GenerateInvoice(amount int64, memo string) (string, error) {
 
 // CheckInvoice takes a Base64 encoded preimage, fetches the corresponding invoice,
 // and checks if the invoice was settled.
-// An error is returned if no corresponding invoice was found.
+// An error is returned if the preimage contains invalid Base64 characters or if no corresponding invoice was found.
 // False is returned if the invoice isn't settled.
 func (c LNDclient) CheckInvoice(preimage string) (bool, error) {
-	// Hash the preimage so we can get the invoice that belongs to it to check if it's settled
+	// Hash the preimage so we can get the corresponding invoice to check if it's settled
 	decodedPreimage, err := base64.StdEncoding.DecodeString(preimage)
 	if err != nil {
 		return false, err

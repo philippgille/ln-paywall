@@ -37,25 +37,23 @@ func NewGinMiddleware(invoiceOptions InvoiceOptions, lndOptions LNDoptions, stor
 				ctx.Abort()
 			}
 		} else {
-			// Check if the provided preimage belongs to a settled API payment invoice and that it wasn't already used and store used preimages
-			ok, err := handlePreimage(preimage, storageClient, client)
+			// Check if the provided preimage belongs to a settled API payment invoice and that it wasn't already used. Also store used preimages.
+			invalidPreimageMsg, err := handlePreimage(preimage, storageClient, client)
 			if err != nil {
 				errorMsg := fmt.Sprintf("An error occured during checking the preimage: %+v", err)
 				log.Printf("%v\n", errorMsg)
 				http.Error(ctx.Writer, errorMsg, http.StatusInternalServerError)
 				ctx.Abort()
+			} else if invalidPreimageMsg != "" {
+				log.Printf("%v: %v\n", invalidPreimageMsg, preimage)
+				http.Error(ctx.Writer, invalidPreimageMsg, http.StatusBadRequest)
+				ctx.Abort()
 			} else {
-				if !ok {
-					log.Printf("The provided preimage is invalid: %v\n", preimage)
-					http.Error(ctx.Writer, "The provided preimage is invalid", http.StatusBadRequest)
-					ctx.Abort()
-				} else {
-					preimageHash, err := ln.HashPreimage(preimage)
-					if err == nil {
-						stdOutLogger.Printf("The provided preimage is valid. Continuing to the next handler. Preimage hash: %v\n", preimageHash)
-					}
-					ctx.Next()
+				preimageHash, err := ln.HashPreimage(preimage)
+				if err == nil {
+					stdOutLogger.Printf("The provided preimage is valid. Continuing to the next handler. Preimage hash: %v\n", preimageHash)
 				}
+				ctx.Next()
 			}
 		}
 	}

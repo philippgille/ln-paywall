@@ -3,6 +3,8 @@ package wall
 import (
 	"log"
 	"os"
+	"reflect"
+	"strings"
 )
 
 // stdOutLogger logs to stdout, while the default log package loggers log to stderr.
@@ -63,38 +65,48 @@ type LNclient interface {
 
 // handlePreimage does four things:
 // 1) Checks if the preimage was already used as a payment proof before.
-// 2) Checks if the preimage corresponds to an existing invoice on the connected lnd.
+// 2) Checks if the preimage corresponds to an existing invoice on the connected LN node.
 // 3) Checks if the corresponding invoice was settled.
 // 4) Store the preimage to the storage for future checks.
-// Returns false and an empty error if the preimage was already used or if the corresponding invoice isn't settled.
-// Returns true and an empty error if everythings's fine.
-func handlePreimage(preimage string, storageClient StorageClient, lndClient LNclient) (bool, error) {
+// Returns a string and an error.
+// The string contains detailed info about the result in case the preimage is invalid.
+// The error is only non-nil if an error occurs during the check (like the LN node can't be reached).
+// The preimage is only valid if the string is empty and the error is nil.
+func handlePreimage(preimage string, storageClient StorageClient, lnClient LNclient) (string, error) {
 	// Check if it was already used before
 	wasUsed, err := storageClient.WasUsed(preimage)
 	if err != nil {
-		return false, err
+		return "", err
 	}
 	if wasUsed {
 		// Key was found, which means the payment was already used for an API call.
-		return false, nil
+		return "The provided preimage was already used in a previous request", nil
 	}
 
 	// Check if a corresponding invoice exists and is settled
-	settled, err := lndClient.CheckInvoice(preimage)
+	settled, err := lnClient.CheckInvoice(preimage)
 	if err != nil {
-		return false, err
+		// Returning a non-nil error leads to an "internal server error", but in some cases it's a "bad request".
+		// TODO: Both checks should be done in a more robust and elegant way
+		if reflect.TypeOf(err).Name() == "CorruptInputError" {
+			return "The provided preimage contains invalid Base64 characters", nil
+		} else if strings.Contains(err.Error(), "unable to locate invoice") {
+			return "No corresponding invoice was found for the provided preimage", nil
+		} else {
+			return "", err
+		}
 	}
 	if !settled {
-		return false, nil
+		return "You somehow obtained the preimage of the invoice, but the invoice is not settled yet", nil
 	}
 
 	// Key not found, so it wasn't used before.
 	// Insert key for future checks.
 	err = storageClient.SetUsed(preimage)
 	if err != nil {
-		return true, err
+		return "", err
 	}
-	return true, nil
+	return "", nil
 }
 
 func assignDefaultValues(invoiceOptions InvoiceOptions, lndOptions LNDoptions) (InvoiceOptions, LNDoptions) {
