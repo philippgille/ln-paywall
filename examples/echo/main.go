@@ -14,7 +14,7 @@ func main() {
 	// Configure and use middleware
 	invoiceOptions := wall.DefaultInvoiceOptions // Price: 1 Satoshi; Memo: "API call"
 	lndOptions := wall.DefaultLNDoptions         // Address: "localhost:10009", CertFile: "tls.cert", MacaroonFile: "invoice.macaroon"
-	storageClient := storage.NewGoMap()
+	storageClient := storage.NewGoMap()          // Local in-memory cache
 	e.Use(wall.NewEchoMiddleware(invoiceOptions, lndOptions, storageClient, nil))
 
 	e.GET("/ping", func(c echo.Context) error {
