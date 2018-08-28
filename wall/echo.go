@@ -12,12 +12,8 @@ import (
 )
 
 // NewEchoMiddleware returns an Echo middleware in the form of an echo.MiddlewareFunc.
-func NewEchoMiddleware(invoiceOptions InvoiceOptions, lndOptions LNDoptions, storageClient StorageClient, skipper middleware.Skipper) echo.MiddlewareFunc {
-	invoiceOptions, lndOptions = assignDefaultValues(invoiceOptions, lndOptions)
-	client, err := ln.NewLNDclient(lndOptions.Address, lndOptions.CertFile, lndOptions.MacaroonFile)
-	if err != nil {
-		panic(err)
-	}
+func NewEchoMiddleware(invoiceOptions InvoiceOptions, lnClient LNclient, storageClient StorageClient, skipper middleware.Skipper) echo.MiddlewareFunc {
+	invoiceOptions = assignDefaultValues(invoiceOptions)
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		if skipper == nil {
 			skipper = middleware.DefaultSkipper
@@ -30,7 +26,7 @@ func NewEchoMiddleware(invoiceOptions InvoiceOptions, lndOptions LNDoptions, sto
 			preimage := ctx.Request().Header.Get("x-preimage")
 			if preimage == "" {
 				// Generate the invoice
-				invoice, err := client.GenerateInvoice(invoiceOptions.Price, invoiceOptions.Memo)
+				invoice, err := lnClient.GenerateInvoice(invoiceOptions.Price, invoiceOptions.Memo)
 				if err != nil {
 					errorMsg := fmt.Sprintf("Couldn't generate invoice: %+v", err)
 					log.Println(errorMsg)
@@ -52,7 +48,7 @@ func NewEchoMiddleware(invoiceOptions InvoiceOptions, lndOptions LNDoptions, sto
 				}
 			} else {
 				// Check if the provided preimage belongs to a settled API payment invoice and that it wasn't already used. Also store used preimages.
-				invalidPreimageMsg, err := handlePreimage(preimage, storageClient, client)
+				invalidPreimageMsg, err := handlePreimage(preimage, storageClient, lnClient)
 				if err != nil {
 					errorMsg := fmt.Sprintf("An error occured during checking the preimage: %+v", err)
 					log.Printf("%v\n", errorMsg)

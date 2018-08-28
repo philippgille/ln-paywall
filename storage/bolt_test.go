@@ -3,6 +3,7 @@ package storage_test
 import (
 	"testing"
 
+	"github.com/philippgille/ln-paywall/ln"
 	"github.com/philippgille/ln-paywall/storage"
 	"github.com/philippgille/ln-paywall/wall"
 )
@@ -12,10 +13,10 @@ import (
 func TestBoltClient(t *testing.T) {
 	t.SkipNow()
 	invoiceOptions := wall.InvoiceOptions{}
-	lndOptions := wall.LNDoptions{}
+	lnClient := ln.LNDclient{}
 	boltClient, _ := storage.NewBoltClient(storage.DefaultBoltOptions)
-	wall.NewHandlerFuncMiddleware(invoiceOptions, lndOptions, boltClient)
-	wall.NewHandlerMiddleware(invoiceOptions, lndOptions, boltClient)
-	wall.NewGinMiddleware(invoiceOptions, lndOptions, boltClient)
-	wall.NewEchoMiddleware(invoiceOptions, lndOptions, boltClient, nil)
+	wall.NewHandlerFuncMiddleware(invoiceOptions, lnClient, boltClient)
+	wall.NewHandlerMiddleware(invoiceOptions, lnClient, boltClient)
+	wall.NewGinMiddleware(invoiceOptions, lnClient, boltClient)
+	wall.NewEchoMiddleware(invoiceOptions, lnClient, boltClient, nil)
 }

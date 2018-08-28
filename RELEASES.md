@@ -8,13 +8,23 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) a
 vNext
 -----
 
+> Warning: This release contains a lot of renamings and refactorings, so your code will most definitely break. But it paves the way to upcoming features and makes some things easier, like automated testing.
+
 - Added: Package-level documentation
 - Improved: In case of an invalid preimage the error response is much more detailed now. It differentiates between several reasons why the preimage is invalid. Additionally more cases of invalid requests are detected now, so a proper `400 Bad Request` is returned instead of a `500 Internal Server Error`. (Issue [#11](https://github.com/philippgille/ln-paywall/issues/11))
+- Improved: Increased performance when creating multiple middleware instances, because the LN client implementation can now be passed into the middleware factory function and be reused across multiple middleware instances. Previously the LN client was created internally, and a new instance was created with every middleware instance.
+    - Not measured, but probably a bit lower memory consumption and a bit less traffic. Probably not much regarding speed.
 
 ### Breaking changes
 
-- Changed: Renamed package from `pay` to `wall`
+- Changed: Renamed package from `pay` to `wall` - this enables us to create a package called `pay` for client-side payments to the paywall in the future
 - Changed: Moved all storage implementations to the new package `storage`
+- Changed: Moved `LNDoptions` and `DefaultLNDoptions` to the from the `wall` (former `pay`) package to the `ln` package
+    - This leads to the same kind of separation and loose coupling as with the storages
+- Changed: All middleware factory functions now take a `LNclient` as second parameter instead of `LNDoptions`
+    - This also leads to the same kind of separation and loose coupling as with the storages
+    - In addition it enables proper mocking of the LN client for tests (preparation for issue [#10](https://github.com/philippgille/ln-paywall/issues/10))
+    - As well as own implementations of LN clients (preparation for issue [#6](https://github.com/philippgille/ln-paywall/issues/6))
 
 v0.3.0 (2018-08-12)
 -------------------

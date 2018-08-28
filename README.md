@@ -62,14 +62,20 @@ Prerequisites
 
 There are currently two prerequisites:
 
-1. A running [lnd](https://github.com/lightningnetwork/lnd) node which listens to gRPC connections
-	- If you don't run it locally, it needs to listen to connections from external machines (so for example on 0.0.0.0 instead of localhost) and has the TLS certificate configured to include the external IP address of the node.
+1. A running Lightning Network node. The middleware connects to the node for example to create invoices for a request. The `ln` package currently provides factory functions for the following LN implementations:
+	- [X] [lnd](https://github.com/lightningnetwork/lnd)
+		- Requires the node to listen to gRPC connections
+		- If you don't run it locally, it needs to listen to connections from external machines (so for example on 0.0.0.0 instead of localhost) and has the TLS certificate configured to include the external IP address of the node.
+	- [ ] [c-lightning](https://github.com/ElementsProject/lightning) (not implemented yet - [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square)](http://makeapullrequest.com) )
+	- [ ] [eclair](https://github.com/ACINQ/eclair) (not implemented yet - [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square)](http://makeapullrequest.com) )
+	- Roll your own!
+		- Just implement the simple `wall.LNClient` interface (only two methods!)
 2. A supported storage mechanism. It's used to cache preimages that have been used as a payment for an API call, so that a user can't do multiple requests with the same preimage of a settled Lightning payment. The `wall` package currently provides factory functions for the following storages:
-	- A simple Go map
+	- [X] A simple Go map
 		- The fastest option, but 1) can't be used across horizontally scaled service instances and 2) doesn't persist data, so when you restart your server, users can re-use old preimages
-	- [bbolt](https://github.com/coreos/bbolt) - a fork of [Bolt](https://github.com/boltdb/bolt) maintained by CoreOS
+	- [X] [bbolt](https://github.com/coreos/bbolt) - a fork of [Bolt](https://github.com/boltdb/bolt) maintained by CoreOS
 		- Very fast, doesn't require any remote or local TCP connections and persists the data, but can't be used across horizontally scaled service instances because it's file-based. Production-ready for single-instance web services though.
-	- [Redis](https://redis.io/)
+	- [X] [Redis](https://redis.io/)
 		- Although the slowest of these options, still fast and most suited for popular web services: Requires a remote or local TCP connection and some administration, but allows data persistency and can even be used with a horizontally scaled web service
 		- Run for example with Docker: `docker run -p 6379:6379 -d redis`
 			- Note: In production you should use a configuration with password (check out [`bitnami/redis`](https://hub.docker.com/r/bitnami/redis/) which makes that easy)!
@@ -94,6 +100,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/philippgille/ln-paywall/ln"
 	"github.com/philippgille/ln-paywall/storage"
 	"github.com/philippgille/ln-paywall/wall"
 )
@@ -101,16 +108,21 @@ import (
 func main() {
 	r := gin.Default()
 
-	// Configure and use middleware
+	// Configure middleware
 	invoiceOptions := wall.DefaultInvoiceOptions // Price: 1 Satoshi; Memo: "API call"
-	lndOptions := wall.DefaultLNDoptions         // Address: "localhost:10009", CertFile: "tls.cert", MacaroonFile: "invoice.macaroon"
+	lndOptions := ln.DefaultLNDoptions           // Address: "localhost:10009", CertFile: "tls.cert", MacaroonFile: "invoice.macaroon"
 	storageClient := storage.NewGoMap()          // Local in-memory cache
-	r.Use(wall.NewGinMiddleware(invoiceOptions, lndOptions, storageClient))
+	lnClient, err := ln.NewLNDclient(lndOptions)
+	if err != nil {
+		panic(err)
+	}
+	// Use middleware
+	r.Use(wall.NewGinMiddleware(invoiceOptions, lnClient, storageClient))
 
 	r.GET("/ping", func(c *gin.Context) {
 		c.String(http.StatusOK, "pong")
 	})
-	
+
 	r.Run() // Listen and serve on 0.0.0.0:8080
 }
 ```

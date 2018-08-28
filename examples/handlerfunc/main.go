@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/philippgille/ln-paywall/ln"
 	"github.com/philippgille/ln-paywall/storage"
 	"github.com/philippgille/ln-paywall/wall"
 )
@@ -23,12 +24,17 @@ func withLogging(next http.HandlerFunc) http.HandlerFunc {
 func main() {
 	// Configure middleware
 	invoiceOptions := wall.DefaultInvoiceOptions // Price: 1 Satoshi; Memo: "API call"
-	lndOptions := wall.DefaultLNDoptions         // Address: "localhost:10009", CertFile: "tls.cert", MacaroonFile: "invoice.macaroon"
+	lndOptions := ln.DefaultLNDoptions           // Address: "localhost:10009", CertFile: "tls.cert", MacaroonFile: "invoice.macaroon"
 	storageClient := storage.NewGoMap()          // Local in-memory cache
-	// Create function that we can use in the middleware chain
-	withPayment := wall.NewHandlerFuncMiddleware(invoiceOptions, lndOptions, storageClient)
+	lnClient, err := ln.NewLNDclient(lndOptions)
+	if err != nil {
+		panic(err)
+	}
 
+	// Create function that we can use in the middleware chain
+	withPayment := wall.NewHandlerFuncMiddleware(invoiceOptions, lnClient, storageClient)
 	// Use a chain of middlewares for the "/ping" endpoint
 	http.HandleFunc("/ping", withLogging(withPayment(pongHandler)))
+
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }

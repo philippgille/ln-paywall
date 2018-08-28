@@ -17,6 +17,7 @@ For more examples check out the "examples" directory in the GitHub repository of
 		"net/http"
 
 		"github.com/gin-gonic/gin"
+		"github.com/philippgille/ln-paywall/ln"
 		"github.com/philippgille/ln-paywall/storage"
 		"github.com/philippgille/ln-paywall/wall"
 	)
@@ -24,11 +25,16 @@ For more examples check out the "examples" directory in the GitHub repository of
 	func main() {
 		r := gin.Default()
 
-		// Configure and use middleware
+		// Configure middleware
 		invoiceOptions := wall.DefaultInvoiceOptions // Price: 1 Satoshi; Memo: "API call"
-		lndOptions := wall.DefaultLNDoptions         // Address: "localhost:10009", CertFile: "tls.cert", MacaroonFile: "invoice.macaroon"
+		lndOptions := ln.DefaultLNDoptions           // Address: "localhost:10009", CertFile: "tls.cert", MacaroonFile: "invoice.macaroon"
 		storageClient := storage.NewGoMap()          // Local in-memory cache
-		r.Use(wall.NewGinMiddleware(invoiceOptions, lndOptions, storageClient))
+		lnClient, err := ln.NewLNDclient(lndOptions)
+		if err != nil {
+			panic(err)
+		}
+		// Use middleware
+		r.Use(wall.NewGinMiddleware(invoiceOptions, lnClient, storageClient))
 
 		r.GET("/ping", func(c *gin.Context) {
 			c.String(http.StatusOK, "pong")

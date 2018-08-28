@@ -9,31 +9,27 @@ import (
 )
 
 // NewHandlerFuncMiddleware returns a function which you can use within an http.HandlerFunc chain.
-func NewHandlerFuncMiddleware(invoiceOptions InvoiceOptions, lndOptions LNDoptions, storageClient StorageClient) func(http.HandlerFunc) http.HandlerFunc {
+func NewHandlerFuncMiddleware(invoiceOptions InvoiceOptions, lnClient LNclient, storageClient StorageClient) func(http.HandlerFunc) http.HandlerFunc {
 	return func(next http.HandlerFunc) http.HandlerFunc {
-		return createHandlerFunc(invoiceOptions, lndOptions, storageClient, next, "HandlerFunc")
+		return createHandlerFunc(invoiceOptions, lnClient, storageClient, next, "HandlerFunc")
 	}
 }
 
 // NewHandlerMiddleware returns a function which you can use within an http.Handler chain.
-func NewHandlerMiddleware(invoiceOptions InvoiceOptions, lndOptions LNDoptions, storageClient StorageClient) func(http.Handler) http.Handler {
+func NewHandlerMiddleware(invoiceOptions InvoiceOptions, lnClient LNclient, storageClient StorageClient) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
-		return http.HandlerFunc(createHandlerFunc(invoiceOptions, lndOptions, storageClient, next.ServeHTTP, "Handler"))
+		return http.HandlerFunc(createHandlerFunc(invoiceOptions, lnClient, storageClient, next.ServeHTTP, "Handler"))
 	}
 }
 
-func createHandlerFunc(invoiceOptions InvoiceOptions, lndOptions LNDoptions, storageClient StorageClient, next http.HandlerFunc, handlingType string) func(w http.ResponseWriter, r *http.Request) {
-	invoiceOptions, lndOptions = assignDefaultValues(invoiceOptions, lndOptions)
-	client, err := ln.NewLNDclient(lndOptions.Address, lndOptions.CertFile, lndOptions.MacaroonFile)
-	if err != nil {
-		panic(err)
-	}
+func createHandlerFunc(invoiceOptions InvoiceOptions, lnClient LNclient, storageClient StorageClient, next http.HandlerFunc, handlingType string) func(w http.ResponseWriter, r *http.Request) {
+	invoiceOptions = assignDefaultValues(invoiceOptions)
 	return func(w http.ResponseWriter, r *http.Request) {
 		// Check if the request contains a header with the preimage that we need to check if the requester paid
 		preimage := r.Header.Get("x-preimage")
 		if preimage == "" {
 			// Generate the invoice
-			invoice, err := client.GenerateInvoice(invoiceOptions.Price, invoiceOptions.Memo)
+			invoice, err := lnClient.GenerateInvoice(invoiceOptions.Price, invoiceOptions.Memo)
 			if err != nil {
 				errorMsg := fmt.Sprintf("Couldn't generate invoice: %+v", err)
 				log.Println(errorMsg)
@@ -48,7 +44,7 @@ func createHandlerFunc(invoiceOptions InvoiceOptions, lndOptions LNDoptions, sto
 			}
 		} else {
 			// Check if the provided preimage belongs to a settled API payment invoice and that it wasn't already used. Also store used preimages.
-			invalidPreimageMsg, err := handlePreimage(preimage, storageClient, client)
+			invalidPreimageMsg, err := handlePreimage(preimage, storageClient, lnClient)
 			if err != nil {
 				errorMsg := fmt.Sprintf("An error occured during checking the preimage: %+v", err)
 				log.Printf("%v\n", errorMsg)

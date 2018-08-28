@@ -28,26 +28,6 @@ var DefaultInvoiceOptions = InvoiceOptions{
 	Memo:  "API call",
 }
 
-// LNDoptions are the options for the connection to the lnd node.
-type LNDoptions struct {
-	// Address of your LND node, including the port.
-	// Optional ("localhost:10009" by default).
-	Address string
-	// Path to the "tls.cert" file that your LND node uses.
-	// Optional ("tls.cert" by default).
-	CertFile string
-	// Path to the "invoice.macaroon" file that your LND node uses.
-	// Optional ("invoice.macaroon" by default).
-	MacaroonFile string
-}
-
-// DefaultLNDoptions provides default values for LNDoptions.
-var DefaultLNDoptions = LNDoptions{
-	Address:      "localhost:10009",
-	CertFile:     "tls.cert",
-	MacaroonFile: "invoice.macaroon",
-}
-
 // StorageClient is an abstraction for different storage client implementations.
 // A storage client must only be able to check if a preimage was already used for a payment bofore
 // and to store a preimage that was used before.
@@ -109,23 +89,12 @@ func handlePreimage(preimage string, storageClient StorageClient, lnClient LNcli
 	return "", nil
 }
 
-func assignDefaultValues(invoiceOptions InvoiceOptions, lndOptions LNDoptions) (InvoiceOptions, LNDoptions) {
+func assignDefaultValues(invoiceOptions InvoiceOptions) InvoiceOptions {
 	// InvoiceOptions
 	if invoiceOptions.Price <= 0 {
 		invoiceOptions.Price = DefaultInvoiceOptions.Price
 	}
 	// Empty Memo is okay.
 
-	// LNDoptions
-	if lndOptions.Address == "" {
-		lndOptions.Address = DefaultLNDoptions.Address
-	}
-	if lndOptions.CertFile == "" {
-		lndOptions.CertFile = DefaultLNDoptions.CertFile
-	}
-	if lndOptions.MacaroonFile == "" {
-		lndOptions.MacaroonFile = DefaultLNDoptions.MacaroonFile
-	}
-
-	return invoiceOptions, lndOptions
+	return invoiceOptions
 }
