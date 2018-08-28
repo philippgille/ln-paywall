@@ -79,6 +79,7 @@ There are currently two prerequisites:
 		- Although the slowest of these options, still fast and most suited for popular web services: Requires a remote or local TCP connection and some administration, but allows data persistency and can even be used with a horizontally scaled web service
 		- Run for example with Docker: `docker run -p 6379:6379 -d redis`
 			- Note: In production you should use a configuration with password (check out [`bitnami/redis`](https://hub.docker.com/r/bitnami/redis/) which makes that easy)!
+	- [ ] [groupcache](https://github.com/golang/groupcache) (not implemented yet - [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square)](http://makeapullrequest.com) )
 	- Roll your own!
 		- Just implement the simple `wall.StorageClient` interface (only two methods!)
 
