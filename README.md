@@ -86,6 +86,8 @@ There are currently two prerequisites:
 Usage
 -----
 
+[![GoDoc](http://www.godoc.org/github.com/philippgille/ln-paywall/wall?status.svg)](http://www.godoc.org/github.com/philippgille/ln-paywall/wall)
+
 Get the package with `go get -u github.com/philippgille/ln-paywall/...`.
 
 We strongly encourage you to use vendoring, because as long as `ln-paywall` is version `0.x`, breaking changes may be introduced in new versions, including changes to the package name / import path. The project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html) and all notable changes to this project are documented in [RELEASES.md](https://github.com/philippgille/ln-paywall/blob/master/RELEASES.md).
