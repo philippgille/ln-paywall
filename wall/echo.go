@@ -45,29 +45,28 @@ func NewEchoMiddleware(invoiceOptions InvoiceOptions, lnClient LNclient, storage
 					Code:    http.StatusPaymentRequired,
 					Message: invoice,
 				}
+			}
+			// Check if the provided preimage belongs to a settled API payment invoice and that it wasn't already used. Also store used preimages.
+			invalidPreimageMsg, err := handlePreimage(preimage, storageClient, lnClient)
+			if err != nil {
+				errorMsg := fmt.Sprintf("An error occurred during checking the preimage: %+v", err)
+				log.Printf("%v\n", errorMsg)
+				return &echo.HTTPError{
+					Code:     http.StatusInternalServerError,
+					Message:  errorMsg,
+					Internal: err,
+				}
+			} else if invalidPreimageMsg != "" {
+				log.Printf("%v: %v\n", invalidPreimageMsg, preimage)
+				return &echo.HTTPError{
+					Code:     http.StatusBadRequest,
+					Message:  invalidPreimageMsg,
+					Internal: err,
+				}
 			} else {
-				// Check if the provided preimage belongs to a settled API payment invoice and that it wasn't already used. Also store used preimages.
-				invalidPreimageMsg, err := handlePreimage(preimage, storageClient, lnClient)
-				if err != nil {
-					errorMsg := fmt.Sprintf("An error occurred during checking the preimage: %+v", err)
-					log.Printf("%v\n", errorMsg)
-					return &echo.HTTPError{
-						Code:     http.StatusInternalServerError,
-						Message:  errorMsg,
-						Internal: err,
-					}
-				} else if invalidPreimageMsg != "" {
-					log.Printf("%v: %v\n", invalidPreimageMsg, preimage)
-					return &echo.HTTPError{
-						Code:     http.StatusBadRequest,
-						Message:  invalidPreimageMsg,
-						Internal: err,
-					}
-				} else {
-					preimageHash, err := ln.HashPreimage(preimage)
-					if err == nil {
-						stdOutLogger.Printf("The provided preimage is valid. Continuing to the next HandlerFunc. Preimage hash: %v\n", preimageHash)
-					}
+				preimageHash, err := ln.HashPreimage(preimage)
+				if err == nil {
+					stdOutLogger.Printf("The provided preimage is valid. Continuing to the next HandlerFunc. Preimage hash: %v\n", preimageHash)
 				}
 			}
 			return next(ctx)
