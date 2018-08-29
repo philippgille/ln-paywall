@@ -46,7 +46,7 @@ func createHandlerFunc(invoiceOptions InvoiceOptions, lnClient LNclient, storage
 			// Check if the provided preimage belongs to a settled API payment invoice and that it wasn't already used. Also store used preimages.
 			invalidPreimageMsg, err := handlePreimage(preimage, storageClient, lnClient)
 			if err != nil {
-				errorMsg := fmt.Sprintf("An error occured during checking the preimage: %+v", err)
+				errorMsg := fmt.Sprintf("An error occurred during checking the preimage: %+v", err)
 				log.Printf("%v\n", errorMsg)
 				http.Error(w, errorMsg, http.StatusInternalServerError)
 			} else if invalidPreimageMsg != "" {

@@ -14,6 +14,7 @@ vNext
 - Improved: In case of an invalid preimage the error response is much more detailed now. It differentiates between several reasons why the preimage is invalid. Additionally more cases of invalid requests are detected now, so a proper `400 Bad Request` is returned instead of a `500 Internal Server Error`. (Issue [#11](https://github.com/philippgille/ln-paywall/issues/11))
 - Improved: Increased performance when creating multiple middleware instances, because the LN client implementation can now be passed into the middleware factory function and be reused across multiple middleware instances. Previously the LN client was created internally, and a new instance was created with every middleware instance.
     - Not measured, but probably a bit lower memory consumption and a bit less traffic. Probably not much regarding speed.
+- Fixed: Wrong spelling in an error message
 
 ### Breaking changes
 

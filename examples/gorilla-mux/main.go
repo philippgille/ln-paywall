@@ -11,7 +11,7 @@ import (
 	"github.com/philippgille/ln-paywall/wall"
 )
 
-func PingHandler(w http.ResponseWriter, r *http.Request) {
+func pingHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	fmt.Fprintf(w, "pong")
 }
@@ -30,7 +30,7 @@ func main() {
 	// Use middleware
 	r.Use(wall.NewHandlerMiddleware(invoiceOptions, lnClient, storageClient))
 
-	r.HandleFunc("/ping", PingHandler)
+	r.HandleFunc("/ping", pingHandler)
 
 	// Bind to a port and pass our router in
 	log.Fatal(http.ListenAndServe(":8080", r))

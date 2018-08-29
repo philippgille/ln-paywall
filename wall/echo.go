@@ -35,22 +35,21 @@ func NewEchoMiddleware(invoiceOptions InvoiceOptions, lnClient LNclient, storage
 						Message:  errorMsg,
 						Internal: err,
 					}
-				} else {
-					stdOutLogger.Printf("Sending invoice in response: %v", invoice)
-					ctx.Response().Header().Set("Content-Type", "application/vnd.lightning.bolt11")
-					ctx.Response().Status = http.StatusPaymentRequired
-					// The actual invoice goes into the body
-					ctx.Response().Write([]byte(invoice))
-					return &echo.HTTPError{
-						Code:    http.StatusPaymentRequired,
-						Message: invoice,
-					}
+				}
+				stdOutLogger.Printf("Sending invoice in response: %v", invoice)
+				ctx.Response().Header().Set("Content-Type", "application/vnd.lightning.bolt11")
+				ctx.Response().Status = http.StatusPaymentRequired
+				// The actual invoice goes into the body
+				ctx.Response().Write([]byte(invoice))
+				return &echo.HTTPError{
+					Code:    http.StatusPaymentRequired,
+					Message: invoice,
 				}
 			} else {
 				// Check if the provided preimage belongs to a settled API payment invoice and that it wasn't already used. Also store used preimages.
 				invalidPreimageMsg, err := handlePreimage(preimage, storageClient, lnClient)
 				if err != nil {
-					errorMsg := fmt.Sprintf("An error occured during checking the preimage: %+v", err)
+					errorMsg := fmt.Sprintf("An error occurred during checking the preimage: %+v", err)
 					log.Printf("%v\n", errorMsg)
 					return &echo.HTTPError{
 						Code:     http.StatusInternalServerError,
