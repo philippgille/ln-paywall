@@ -10,7 +10,7 @@ import (
 	"github.com/philippgille/ln-paywall/wall"
 )
 
-func pongHandler(w http.ResponseWriter, r *http.Request) {
+func pingHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprint(w, "pong")
 }
 
@@ -34,7 +34,7 @@ func main() {
 	// Create function that we can use in the middleware chain
 	withPayment := wall.NewHandlerFuncMiddleware(invoiceOptions, lnClient, storageClient)
 	// Use a chain of middlewares for the "/ping" endpoint
-	http.HandleFunc("/ping", withLogging(withPayment(pongHandler)))
+	http.HandleFunc("/ping", withLogging(withPayment(pingHandler)))
 
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }
