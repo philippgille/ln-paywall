@@ -142,6 +142,7 @@ Simple examples to show the use for the different web frameworks / routers / jus
 More complex and useful example:
 
 - [QR code generation API using Gin](examples/qr-code/main.go)
+	- Ready-to-use Docker image: [https://hub.docker.com/r/philippgille/qr-code/](https://hub.docker.com/r/philippgille/qr-code/)
 
 Related Projects
 ----------------
