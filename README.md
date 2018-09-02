@@ -89,7 +89,7 @@ Get the package with `go get -u github.com/philippgille/ln-paywall/...`.
 
 We strongly encourage you to use vendoring, because as long as `ln-paywall` is version `0.x`, breaking changes may be introduced in new versions, including changes to the package name / import path. The project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html) and all notable changes to this project are documented in [RELEASES.md](https://github.com/philippgille/ln-paywall/blob/master/RELEASES.md).
 
-The best way to see how to use `ln-paywall` is by example. In the below examples we create a web service that responds to requests to `/ping` with "pong". Here we use Gin as web framework, but other web frameworks and libraries are supported as well, as mentioned in the beginning section of this README. You can also check out other examples [here](examples/).
+The best way to see how to use `ln-paywall` is by example. In the below examples we create a web service that responds to requests to `/ping` with "pong", using Gin as the web framework.
 
 
 ```Go
@@ -126,14 +126,22 @@ func main() {
 }
 ```
 
+This is just the most basic example. See the list of examples below for examples with other web frameworks / routers / just the stdlib, as well as for a more complex and useful example.
+
 ### List of examples
 
 Follow the links to the example code files.
+
+Simple examples to show the use for the different web frameworks / routers / just the stdlib:
 
 - [Gin](examples/ping/gin/main.go)
 - [gorilla/mux](examples/ping/gorilla-mux/main.go)
 - [net/http HandlerFunc](examples/ping/handlerfunc/main.go)
 - [Echo](examples/ping/echo/main.go)
+
+More complex and useful example:
+
+- [QR code generation API using Gin](examples/qr-code/main.go)
 
 Related Projects
 ----------------

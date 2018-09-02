@@ -1,0 +1,67 @@
+package main
+
+import (
+	"flag"
+	"net/http"
+
+	"github.com/gin-gonic/gin"
+	"github.com/philippgille/ln-paywall/ln"
+	"github.com/philippgille/ln-paywall/storage"
+	"github.com/philippgille/ln-paywall/wall"
+	qrcode "github.com/skip2/go-qrcode"
+)
+
+var lndAddress = flag.String("addr", "localhost:10009", "The address of the lnd node (including gRPC port)")
+var dataDir = flag.String("dataDir", "data/", "The relative path to the data directory, where tls.cert and invoice.macaroon are located")
+
+func main() {
+	flag.Parse()
+
+	r := gin.Default()
+
+	// Configure middleware
+
+	// Invoice
+	invoiceOptions := wall.InvoiceOptions{
+		Memo:  "QR code generation API call",
+		Price: 1000, // At an exchange rate of $1,000 for 1 BTC this would be $0.01
+	}
+
+	// LN client
+	lndOptions := ln.LNDoptions{
+		Address:      *lndAddress,
+		CertFile:     *dataDir + "tls.cert",
+		MacaroonFile: *dataDir + "invoice.macaroon",
+	}
+	lnClient, err := ln.NewLNDclient(lndOptions)
+	if err != nil {
+		panic(err)
+	}
+
+	// Storage
+	boltOptions := storage.BoltOptions{
+		Path: *dataDir + "qr-code.db",
+	}
+	storageClient, err := storage.NewBoltClient(boltOptions)
+	if err != nil {
+		panic(err)
+	}
+
+	// Use middleware
+	r.Use(wall.NewGinMiddleware(invoiceOptions, lnClient, storageClient))
+
+	r.GET("/qr", qrHandler)
+
+	r.Run() // Listen and serve on 0.0.0.0:8080
+}
+
+func qrHandler(c *gin.Context) {
+	data := c.Query("data")
+	qrBytes, err := qrcode.Encode(data, qrcode.Medium, 256)
+	if err != nil {
+		c.String(http.StatusInternalServerError, "There was an error encoding the data as QR code")
+		c.Abort()
+	} else {
+		c.Data(http.StatusOK, "image/png", qrBytes)
+	}
+}

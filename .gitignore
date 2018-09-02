@@ -18,8 +18,8 @@ invoice.macaroon
 tls.cert
 
 # bbolt DB files that are created when testing with bbolt
-ln-paywall.db
-ln-paywall.db.lock
+*.db
+*.db.lock
 
 # VS Code debug file that's created for example when running one of the examples in debug mode
 debug
