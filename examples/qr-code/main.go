@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"net/http"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/philippgille/ln-paywall/ln"
@@ -17,6 +18,15 @@ var dataDir = flag.String("dataDir", "data/", "The relative path to the data dir
 func main() {
 	flag.Parse()
 
+	// Make sure the path to the data directory ends with "/"
+	var dataDirSuffixed string
+	if strings.LastIndex(*dataDir, "/") != len(*dataDir)-1 &&
+		strings.LastIndex(*dataDir, "\\") != len(*dataDir)-1 {
+		dataDirSuffixed = *dataDir + "/"
+	} else {
+		dataDirSuffixed = *dataDir
+	}
+
 	r := gin.Default()
 
 	// Configure middleware
@@ -30,8 +40,8 @@ func main() {
 	// LN client
 	lndOptions := ln.LNDoptions{
 		Address:      *lndAddress,
-		CertFile:     *dataDir + "tls.cert",
-		MacaroonFile: *dataDir + "invoice.macaroon",
+		CertFile:     dataDirSuffixed + "tls.cert",
+		MacaroonFile: dataDirSuffixed + "invoice.macaroon",
 	}
 	lnClient, err := ln.NewLNDclient(lndOptions)
 	if err != nil {
@@ -40,7 +50,7 @@ func main() {
 
 	// Storage
 	boltOptions := storage.BoltOptions{
-		Path: *dataDir + "qr-code.db",
+		Path: dataDirSuffixed + "qr-code.db",
 	}
 	storageClient, err := storage.NewBoltClient(boltOptions)
 	if err != nil {
