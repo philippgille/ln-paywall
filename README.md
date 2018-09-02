@@ -22,10 +22,7 @@ Contents
 - [How it works](#how-it-works)
 - [Prerequisites](#prerequisites)
 - [Usage](#usage)
-    - [Gin](#gin)
-    - [gorilla/mux](#gorillamux)
-    - [net/http HandlerFunc](#nethttp-HandlerFunc)
-    - [Echo](#echo)
+    - [List of examples](#list-of-examples)
 - [Related projects](#related-projects)
 
 Purpose
@@ -92,9 +89,8 @@ Get the package with `go get -u github.com/philippgille/ln-paywall/...`.
 
 We strongly encourage you to use vendoring, because as long as `ln-paywall` is version `0.x`, breaking changes may be introduced in new versions, including changes to the package name / import path. The project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html) and all notable changes to this project are documented in [RELEASES.md](https://github.com/philippgille/ln-paywall/blob/master/RELEASES.md).
 
-The best way to see how to use `ln-paywall` is by example. In the below examples we create a web service that responds to requests to `/ping` with "pong".
+The best way to see how to use `ln-paywall` is by example. In the below examples we create a web service that responds to requests to `/ping` with "pong". Here we use Gin as web framework, but other web frameworks and libraries are supported as well, as mentioned in the beginning section of this README. You can also check out other examples [here](examples/).
 
-### Gin
 
 ```Go
 package main
@@ -130,21 +126,14 @@ func main() {
 }
 ```
 
-This example can also be found here: [example](examples/gin/main.go).
+### List of examples
 
-### gorilla/mux
+Follow the links to the example code files.
 
-See [example](examples/gorilla-mux/main.go).
-
-### net/http HandlerFunc
-
-To show how to chain the middleware, this example includes a logging middleware as well.
-
-See [example](examples/handlerfunc/main.go).
-
-### Echo
-
-See [example](examples/echo/main.go).
+- [Gin](examples/ping/gin/main.go)
+- [gorilla/mux](examples/ping/gorilla-mux/main.go)
+- [net/http HandlerFunc](examples/ping/handlerfunc/main.go)
+- [Echo](examples/ping/echo/main.go)
 
 Related Projects
 ----------------
