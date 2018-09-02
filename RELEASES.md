@@ -8,6 +8,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) a
 vNext
 -----
 
+v0.4.0 (2018-09-03)
+-------------------
+
 > Warning: This release contains a lot of renamings and refactorings, so your code will most definitely break. But it paves the way to upcoming features and makes some things easier, like automated testing.
 
 - Added: Package-level documentation
