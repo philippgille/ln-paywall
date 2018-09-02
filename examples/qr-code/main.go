@@ -12,8 +12,9 @@ import (
 	qrcode "github.com/skip2/go-qrcode"
 )
 
-var lndAddress = flag.String("addr", "localhost:10009", "The address of the lnd node (including gRPC port)")
-var dataDir = flag.String("dataDir", "data/", "The relative path to the data directory, where tls.cert and invoice.macaroon are located")
+var lndAddress = flag.String("addr", "localhost:10009", "Address of the lnd node (including gRPC port)")
+var dataDir = flag.String("dataDir", "data/", "Relative path to the data directory, where tls.cert and invoice.macaroon are located")
+var price = flag.Int64("price", 1000, "Price of one request in Satoshis (at an exchange rate of $1,000 for 1 BTC 1000 Satoshis would be $0.01)")
 
 func main() {
 	flag.Parse()
@@ -34,7 +35,7 @@ func main() {
 	// Invoice
 	invoiceOptions := wall.InvoiceOptions{
 		Memo:  "QR code generation API call",
-		Price: 1000, // At an exchange rate of $1,000 for 1 BTC this would be $0.01
+		Price: *price,
 	}
 
 	// LN client
