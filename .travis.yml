@@ -1,3 +1,8 @@
+sudo: required
+
+services:
+  - docker
+
 git:
   depth: 1
 
@@ -15,3 +20,5 @@ script:
   - go build github.com/philippgille/ln-paywall/...
   # tests
   - go test -v github.com/philippgille/ln-paywall/...
+  # Docker image of example web service
+  - docker build -f examples/qr-code/Dockerfile -t philippgille/qr-code examples/qr-code
