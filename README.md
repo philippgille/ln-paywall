@@ -143,6 +143,7 @@ More complex and useful example:
 
 - [QR code generation API using Gin](examples/qr-code/main.go)
 	- Ready-to-use Docker image: [https://hub.docker.com/r/philippgille/qr-code/](https://hub.docker.com/r/philippgille/qr-code/)
+	- Try out the demo deployed on [https://lightning.ws](https://lightning.ws)
 
 Related Projects
 ----------------
