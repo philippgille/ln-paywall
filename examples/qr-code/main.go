@@ -68,11 +68,16 @@ func main() {
 
 func qrHandler(c *gin.Context) {
 	data := c.Query("data")
-	qrBytes, err := qrcode.Encode(data, qrcode.Medium, 256)
-	if err != nil {
-		c.String(http.StatusInternalServerError, "There was an error encoding the data as QR code")
+	if data == "" {
+		c.String(http.StatusBadRequest, "The query parameter \"data\" is missing")
 		c.Abort()
 	} else {
-		c.Data(http.StatusOK, "image/png", qrBytes)
+		qrBytes, err := qrcode.Encode(data, qrcode.Medium, 256)
+		if err != nil {
+			c.String(http.StatusInternalServerError, "There was an error encoding the data as QR code")
+			c.Abort()
+		} else {
+			c.Data(http.StatusOK, "image/png", qrBytes)
+		}
 	}
 }
