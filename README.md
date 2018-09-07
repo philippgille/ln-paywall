@@ -74,7 +74,7 @@ There are currently two prerequisites:
 		- Very fast, doesn't require any remote or local TCP connections and persists the data, but can't be used across horizontally scaled service instances because it's file-based. Production-ready for single-instance web services though.
 	- [X] [Redis](https://redis.io/)
 		- Although the slowest of these options, still fast and most suited for popular web services: Requires a remote or local TCP connection and some administration, but allows data persistency and can even be used with a horizontally scaled web service
-		- Run for example with Docker: `docker run -p 6379:6379 -d redis`
+		- Run for example with Docker: `docker run -d -p 6379:6379 redis`
 			- Note: In production you should use a configuration with password (check out [`bitnami/redis`](https://hub.docker.com/r/bitnami/redis/) which makes that easy)!
 	- [ ] [groupcache](https://github.com/golang/groupcache) (not implemented yet - [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square)](http://makeapullrequest.com) )
 	- Roll your own!
