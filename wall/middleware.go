@@ -1,6 +1,7 @@
 package wall
 
 import (
+	"encoding/hex"
 	"log"
 	"os"
 	"reflect"
@@ -52,9 +53,9 @@ type LNclient interface {
 // The string contains detailed info about the result in case the preimage is invalid.
 // The error is only non-nil if an error occurs during the check (like the LN node can't be reached).
 // The preimage is only valid if the string is empty and the error is nil.
-func handlePreimage(preimage string, storageClient StorageClient, lnClient LNclient) (string, error) {
+func handlePreimage(preimageHex string, storageClient StorageClient, lnClient LNclient) (string, error) {
 	// Check if it was already used before
-	wasUsed, err := storageClient.WasUsed(preimage)
+	wasUsed, err := storageClient.WasUsed(preimageHex)
 	if err != nil {
 		return "", err
 	}
@@ -64,12 +65,14 @@ func handlePreimage(preimage string, storageClient StorageClient, lnClient LNcli
 	}
 
 	// Check if a corresponding invoice exists and is settled
-	settled, err := lnClient.CheckInvoice(preimage)
+	settled, err := lnClient.CheckInvoice(preimageHex)
 	if err != nil {
 		// Returning a non-nil error leads to an "internal server error", but in some cases it's a "bad request".
-		// TODO: Both checks should be done in a more robust and elegant way
-		if reflect.TypeOf(err).Name() == "CorruptInputError" {
-			return "The provided preimage contains invalid Base64 characters", nil
+		// Handle those cases here.
+		// TODO: Checks should be done in a more robust and elegant way
+		if reflect.TypeOf(err).Name() == "InvalidByteError" ||
+			err == hex.ErrLength {
+			return "The provided preimage isn't properly hex encoded", nil
 		} else if strings.Contains(err.Error(), "unable to locate invoice") {
 			return "No corresponding invoice was found for the provided preimage", nil
 		} else {
@@ -82,7 +85,7 @@ func handlePreimage(preimage string, storageClient StorageClient, lnClient LNcli
 
 	// Key not found, so it wasn't used before.
 	// Insert key for future checks.
-	err = storageClient.SetUsed(preimage)
+	err = storageClient.SetUsed(preimageHex)
 	if err != nil {
 		return "", err
 	}

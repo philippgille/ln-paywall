@@ -52,7 +52,7 @@ How it works
 With `ln-paywall` you can simply use one of the provided middlewares in your Go web service to have your web service do two things:
 
 1. The first request gets rejected with the `402 Payment Required` HTTP status, a `Content-Type: application/vnd.lightning.bolt11` header and a Lightning ([BOLT-11](https://github.com/lightningnetwork/lightning-rfc/blob/master/11-payment-encoding.md)-conforming) invoice in the body
-2. The second request must contain a `X-Preimage` header with the preimage of the paid Lightning invoice. The middleware checks if 1) the invoice was paid and 2) not already used for a previous request. If both preconditions are met, it continues to the next middleware or final request handler.
+2. The second request must contain a `X-Preimage` header with the preimage of the paid Lightning invoice (hex encoded). The middleware checks if 1) the invoice was paid and 2) not already used for a previous request. If both preconditions are met, it continues to the next middleware or final request handler.
 
 Prerequisites
 -------------

@@ -26,8 +26,8 @@ func createHandlerFunc(invoiceOptions InvoiceOptions, lnClient LNclient, storage
 	invoiceOptions = assignDefaultValues(invoiceOptions)
 	return func(w http.ResponseWriter, r *http.Request) {
 		// Check if the request contains a header with the preimage that we need to check if the requester paid
-		preimage := r.Header.Get("x-preimage")
-		if preimage == "" {
+		preimageHex := r.Header.Get("x-preimage")
+		if preimageHex == "" {
 			// Generate the invoice
 			invoice, err := lnClient.GenerateInvoice(invoiceOptions.Price, invoiceOptions.Memo)
 			if err != nil {
@@ -44,16 +44,16 @@ func createHandlerFunc(invoiceOptions InvoiceOptions, lnClient LNclient, storage
 			}
 		} else {
 			// Check if the provided preimage belongs to a settled API payment invoice and that it wasn't already used. Also store used preimages.
-			invalidPreimageMsg, err := handlePreimage(preimage, storageClient, lnClient)
+			invalidPreimageMsg, err := handlePreimage(preimageHex, storageClient, lnClient)
 			if err != nil {
 				errorMsg := fmt.Sprintf("An error occurred during checking the preimage: %+v", err)
 				log.Printf("%v\n", errorMsg)
 				http.Error(w, errorMsg, http.StatusInternalServerError)
 			} else if invalidPreimageMsg != "" {
-				log.Printf("%v: %v\n", invalidPreimageMsg, preimage)
+				log.Printf("%v: %v\n", invalidPreimageMsg, preimageHex)
 				http.Error(w, invalidPreimageMsg, http.StatusBadRequest)
 			} else {
-				preimageHash, err := ln.HashPreimage(preimage)
+				preimageHash, err := ln.HashPreimage(preimageHex)
 				if err == nil {
 					stdOutLogger.Printf("The provided preimage is valid. Continuing to the next %v. Preimage hash: %v\n", handlingType, preimageHash)
 				}

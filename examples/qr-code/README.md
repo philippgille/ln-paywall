@@ -13,7 +13,7 @@ Usage
 3. Run the container: `docker run -d --name qr-code -v $(pwd)/data/:/root/data/ -p 8080:8080 philippgille/qr-code -addr "123.123.123.123:10009"`
 4. Send a request: `curl http://localhost:8080/qr?data=testtext`
 5. Pay the invoice from the response via the Lightning Network
-6. Send the request again, this time with the preimage as payment proof: `curl -H "x-preimage: c29tZSBwcmVpbWFnZQ==" http://localhost:8080/qr?data=testtext`
+6. Send the request again, this time with the preimage as payment proof (hex encoded) and the data as query parameters: `curl -H "x-preimage: 119969c2338798cd56708126b5d6c0f6f5e75ed38da7a409b0081d94b4dacbf8" http://localhost:8080/qr?data=testtext`
 
 The response contains the QR code as PNG image.
 

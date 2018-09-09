@@ -2,8 +2,6 @@ package ln
 
 import (
 	"context"
-	"crypto/sha256"
-	"encoding/base64"
 	"encoding/hex"
 	"fmt"
 	"io/ioutil"
@@ -39,27 +37,25 @@ func (c LNDclient) GenerateInvoice(amount int64, memo string) (string, error) {
 	return res.GetPaymentRequest(), nil
 }
 
-// CheckInvoice takes a Base64 encoded preimage, fetches the corresponding invoice,
-// and checks if the invoice was settled.
-// An error is returned if the preimage contains invalid Base64 characters or if no corresponding invoice was found.
+// CheckInvoice takes a hex encoded preimage and checks if the corresponding invoice was settled.
+// An error is returned if the preimage isn't properly encoded or if no corresponding invoice was found.
 // False is returned if the invoice isn't settled.
-func (c LNDclient) CheckInvoice(preimage string) (bool, error) {
-	// Hash the preimage so we can get the corresponding invoice to check if it's settled
-	decodedPreimage, err := base64.StdEncoding.DecodeString(preimage)
+func (c LNDclient) CheckInvoice(preimageHex string) (bool, error) {
+	preimageHashHex, err := HashPreimage(preimageHex)
 	if err != nil {
 		return false, err
 	}
-	hash := sha256.Sum256([]byte(decodedPreimage))
-	hashSlice := hash[:]
+	// Ignore the error because the reverse (encoding) was just done previously, so this must work
+	plainHash, _ := hex.DecodeString(preimageHashHex)
+
+	log.Printf("Checking invoice for hash %v\n", preimageHashHex)
 
 	// Get the invoice for that hash
 	paymentHash := lnrpc.PaymentHash{
-		RHash: hashSlice,
+		RHash: plainHash,
 		// Hex encoded, must be exactly 32 byte
-		RHashStr: hex.EncodeToString(hashSlice),
+		RHashStr: preimageHashHex,
 	}
-	encodedHash := base64.StdEncoding.EncodeToString(hashSlice)
-	log.Printf("Checking invoice for hash %v\n", encodedHash)
 	invoice, err := c.lndClient.LookupInvoice(c.ctx, &paymentHash)
 	if err != nil {
 		return false, err

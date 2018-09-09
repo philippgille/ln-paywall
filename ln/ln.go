@@ -2,18 +2,19 @@ package ln
 
 import (
 	"crypto/sha256"
-	"encoding/base64"
+	"encoding/hex"
 )
 
-// HashPreimage hashes the Base64 preimage and encodes the hash in Base64.
-// It's the same format that's being shown by lncli listinvoices (preimage as well as hash).
-func HashPreimage(preimage string) (string, error) {
-	decodedPreimage, err := base64.StdEncoding.DecodeString(preimage)
+// HashPreimage turns a hex encoded preimage into a hex encoded preimage hash.
+// It's the same format that's being used by "lncli listpayments", Eclair on Android and bolt11 payment request decoders like https://lndecode.com.
+// Only "lncli listinvoices" uses Base64.
+func HashPreimage(preimageHex string) (string, error) {
+	// Decode from hex, hash, encode to hex
+	preimage, err := hex.DecodeString(preimageHex)
 	if err != nil {
 		return "", err
 	}
-	hash := sha256.Sum256([]byte(decodedPreimage))
-	hashSlice := hash[:]
-	encodedHash := base64.StdEncoding.EncodeToString(hashSlice)
-	return encodedHash, nil
+	hashByteArray := sha256.Sum256(preimage)
+	preimageHashHex := hex.EncodeToString(hashByteArray[:])
+	return preimageHashHex, nil
 }
