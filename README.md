@@ -137,6 +137,7 @@ Follow the links to the example code files.
 Simple examples to show the use for the different web frameworks / routers / just the stdlib:
 
 - [Gin](examples/ping/gin/main.go)
+- [Gin (with c-lightning + Lightning Charge as backend)](examples/ping/gin-charge/main.go)
 - [gorilla/mux](examples/ping/gorilla-mux/main.go)
 - [net/http HandlerFunc](examples/ping/handlerfunc/main.go)
 - [Echo](examples/ping/echo/main.go)
