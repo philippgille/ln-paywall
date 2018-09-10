@@ -21,8 +21,7 @@ func main() {
 
 	// Make sure the path to the data directory ends with "/"
 	var dataDirSuffixed string
-	if strings.LastIndex(*dataDir, "/") != len(*dataDir)-1 &&
-		strings.LastIndex(*dataDir, "\\") != len(*dataDir)-1 {
+	if !strings.HasSuffix(*dataDir, "/") {
 		dataDirSuffixed = *dataDir + "/"
 	} else {
 		dataDirSuffixed = *dataDir
