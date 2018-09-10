@@ -8,6 +8,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) a
 vNext
 -----
 
+- Added: Support for [c-lightning](https://github.com/ElementsProject/lightning) with [Lightning Charge](https://github.com/ElementsProject/lightning-charge)
+    - Note: The current implementation's performance decreases with the amount of invoices in the Lightning Charge server. This will be fixed in an upcoming release.
+
 ### Breaking changes
 
 - Changed: The preimage in the `X-Preimage` header must now be hex encoded instead of Base64 encoded. The hex encoded representation is the typical representation, as used by "lncli listpayments", Eclair on Android and bolt11 payment request decoders like [https://lndecode.com](https://lndecode.com). Base64 was used previously because "lncli listinvoices" uses that encoding.

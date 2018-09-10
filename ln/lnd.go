@@ -72,7 +72,7 @@ func (c LNDclient) CheckInvoice(preimageHex string) (bool, error) {
 func NewLNDclient(lndOptions LNDoptions) (LNDclient, error) {
 	result := LNDclient{}
 
-	lndOptions = assignDefaultValues(lndOptions)
+	lndOptions = assignLNDdefaultValues(lndOptions)
 
 	// Set up a connection to the server.
 	creds, err := credentials.NewClientTLSFromFile(lndOptions.CertFile, "")
@@ -125,7 +125,7 @@ var DefaultLNDoptions = LNDoptions{
 	MacaroonFile: "invoice.macaroon",
 }
 
-func assignDefaultValues(lndOptions LNDoptions) LNDoptions {
+func assignLNDdefaultValues(lndOptions LNDoptions) LNDoptions {
 	// LNDoptions
 	if lndOptions.Address == "" {
 		lndOptions.Address = DefaultLNDoptions.Address

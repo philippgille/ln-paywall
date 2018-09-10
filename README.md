@@ -63,7 +63,9 @@ There are currently two prerequisites:
 	- [X] [lnd](https://github.com/lightningnetwork/lnd)
 		- Requires the node to listen to gRPC connections
 		- If you don't run it locally, it needs to listen to connections from external machines (so for example on 0.0.0.0 instead of localhost) and has the TLS certificate configured to include the external IP address of the node.
-	- [ ] [c-lightning](https://github.com/ElementsProject/lightning) (not implemented yet - [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square)](http://makeapullrequest.com) )
+	- [X] [c-lightning](https://github.com/ElementsProject/lightning) with [Lightning Charge](https://github.com/ElementsProject/lightning-charge)
+		- Run for example with Docker: ``docker run -d -u `id -u` -v `pwd`/data:/data -p 9112:9112 -e API_TOKEN=secret shesek/lightning-charge``
+		- Vanilla c-lightning (without Lightning Charge) won't be supported as long as c-lightning's RPC API only works via Unix socket and cannot be used as a remote server, because this is not a good fit for potentially multiple web service instances elastically scaled across a cluster of host machines
 	- [ ] [eclair](https://github.com/ACINQ/eclair) (not implemented yet - [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square)](http://makeapullrequest.com) )
 	- Roll your own!
 		- Just implement the simple `wall.LNClient` interface (only two methods!)
