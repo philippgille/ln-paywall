@@ -3,7 +3,6 @@ package ln
 import (
 	"context"
 	"encoding/hex"
-	"fmt"
 	"io/ioutil"
 	"log"
 
@@ -92,7 +91,7 @@ func NewLNDclient(lndOptions LNDoptions) (LNDclient, error) {
 		return result, err
 	}
 	// Value must be the hex representation of the file content
-	macaroonHex := fmt.Sprintf("%X", string(macaroon))
+	macaroonHex := hex.EncodeToString(macaroon)
 	ctx := context.Background()
 	ctx = metadata.AppendToOutgoingContext(ctx, "macaroon", macaroonHex)
 
