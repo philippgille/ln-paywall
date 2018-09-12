@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/hex"
 	"io/ioutil"
-	"log"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
@@ -27,7 +26,7 @@ func (c LNDclient) GenerateInvoice(amount int64, memo string) (string, error) {
 		Memo:  memo,
 		Value: amount,
 	}
-	log.Println("Creating invoice for a new API request")
+	stdOutLogger.Println("Creating invoice for a new API request")
 	res, err := c.lndClient.AddInvoice(c.ctx, &invoice)
 	if err != nil {
 		return "", err
@@ -47,7 +46,7 @@ func (c LNDclient) CheckInvoice(preimageHex string) (bool, error) {
 	// Ignore the error because the reverse (encoding) was just done previously, so this must work
 	plainHash, _ := hex.DecodeString(preimageHashHex)
 
-	log.Printf("Checking invoice for hash %v\n", preimageHashHex)
+	stdOutLogger.Printf("Checking invoice for hash %v\n", preimageHashHex)
 
 	// Get the invoice for that hash
 	paymentHash := lnrpc.PaymentHash{

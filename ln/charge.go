@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"errors"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -36,6 +35,7 @@ func (c ChargeClient) GenerateInvoice(amount int64, memo string) (string, error)
 	}
 	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 	req.SetBasicAuth("api-token", c.apiToken) // This might seem strange, but it's how Lightning Charge expects it
+	stdOutLogger.Println("Creating invoice for a new API request")
 	res, err := c.client.Do(req)
 	if err != nil {
 		return "", err
@@ -76,7 +76,7 @@ func (c ChargeClient) CheckInvoice(preimageHex string) (bool, error) {
 		return false, err
 	}
 
-	log.Printf("Checking invoice for hash %v\n", preimageHashHex)
+	stdOutLogger.Printf("Checking invoice for hash %v\n", preimageHashHex)
 
 	// Fetch all existing invoices
 	req, err := http.NewRequest("GET", c.baseURL+"/invoices", nil)

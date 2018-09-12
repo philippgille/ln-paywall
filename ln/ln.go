@@ -3,7 +3,12 @@ package ln
 import (
 	"crypto/sha256"
 	"encoding/hex"
+	"log"
+	"os"
 )
+
+// stdOutLogger logs to stdout, while the default log package loggers log to stderr.
+var stdOutLogger = log.New(os.Stdout, "", log.LstdFlags)
 
 // HashPreimage turns a hex encoded preimage into a hex encoded preimage hash.
 // It's the same format that's being used by "lncli listpayments", Eclair on Android and bolt11 payment request decoders like https://lndecode.com.

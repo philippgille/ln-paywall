@@ -10,6 +10,7 @@ vNext
 
 - Added: Support for [c-lightning](https://github.com/ElementsProject/lightning) with [Lightning Charge](https://github.com/ElementsProject/lightning-charge)
     - Note: The current implementation's performance decreases with the amount of invoices in the Lightning Charge server. This will be fixed in an upcoming release.
+- Fixed: Some info logs were logged to stderr instead of stdout
 
 ### Breaking changes
 
