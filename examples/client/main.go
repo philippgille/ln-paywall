@@ -4,7 +4,6 @@ import (
 	"flag"
 	"fmt"
 	"io/ioutil"
-	"net/http"
 
 	"github.com/philippgille/ln-paywall/ln"
 	"github.com/philippgille/ln-paywall/pay"
@@ -24,11 +23,7 @@ func main() {
 	client := pay.NewClient(nil, lnClient) // Uses http.DefaultClient if no http.Client is passed
 
 	// Send request to an ln-paywalled API
-	req, err := http.NewRequest("GET", "http://localhost:8080/ping", nil)
-	if err != nil {
-		panic(err)
-	}
-	res, err := client.Do(req)
+	res, err := client.Get("http://localhost:8080/ping")
 	if err != nil {
 		panic(err)
 	}

@@ -22,8 +22,23 @@ type Client struct {
 	l LNclient
 }
 
-// Do sends its own request to the URL + path of the given request to trigger a "402 Payment Required" response
-// with an invoice. It then pays the invoice via the configured Lightning Network node.
+// Get sends an HTTP GET request to the given URL and automatically handles the required payment in the background.
+// It does this by sending its own request to the URL + path of the given request
+// to trigger a "402 Payment Required" response with an invoice.
+// It then pays the invoice via the configured Lightning Network node.
+// Finally it sends the originally intended (given) request with an additional HTTP header and returns the response.
+func (c *Client) Get(url string) (*http.Response, error) {
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return nil, err
+	}
+	return c.Do(req)
+}
+
+// Do sends the given request and automatically handles the required payment in the background.
+// It does this by sending its own request to the URL + path of the given request
+// to trigger a "402 Payment Required" response with an invoice.
+// It then pays the invoice via the configured Lightning Network node.
 // Finally it sends the originally intended (given) request with an additional HTTP header and returns the response.
 func (c *Client) Do(req *http.Request) (*http.Response, error) {
 	// Send first request, no data (query params or body) required

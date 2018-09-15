@@ -15,6 +15,7 @@ vNext
     - Struct `pay.Client` - Replacement for a standard Go `http.Client`
         - Factory function `NewClient(httpClient *http.Client, lnClient LNclient) Client` - `httpClient` can be passed as `nil`, leading to `http.DefaultClient` being used
         - Method `Do(req *http.Request) (*http.Response, error)` - Meant to be used as equivalent to the same Go `http.Client` method, but handles the Lightning Network payment in the background.
+        - Method `Get(url string) (*http.Response, error)` - A convenience method for the `Do(...)` method, also an equivalent to the same Go `http.Client` method (regarding its usage)
     - Example client in `examples/client/main.go`
 - Added: Method `Pay(invoice string) (string, error)` for `ln.LNDclient` - Implements the new `pay.LNclient` interface, so that the `LNDclient` can be used as parameter in the `pay.NewClient(...)` function. (Issue [#20](https://github.com/philippgille/ln-paywall/issues/20))
 - Fixed: Some info logs were logged to stderr instead of stdout
