@@ -20,11 +20,9 @@ func main() {
 	flag.Parse()
 
 	// Make sure the path to the data directory ends with "/"
-	var dataDirSuffixed string
-	if !strings.HasSuffix(*dataDir, "/") {
-		dataDirSuffixed = *dataDir + "/"
-	} else {
-		dataDirSuffixed = *dataDir
+	dataDirSuffixed := *dataDir
+	if !strings.HasSuffix(dataDirSuffixed, "/") {
+		dataDirSuffixed += "/"
 	}
 
 	r := gin.Default()
