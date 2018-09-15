@@ -3,6 +3,7 @@ package ln
 import (
 	"context"
 	"encoding/hex"
+	"errors"
 	"io/ioutil"
 
 	"google.golang.org/grpc"
@@ -12,7 +13,8 @@ import (
 	"github.com/lightningnetwork/lnd/lnrpc"
 )
 
-// LNDclient is an implementation of the wall.Client interface for the lnd Lightning Network node implementation.
+// LNDclient is an implementation of the wall.LNClient and pay.LNClient interface
+// for the lnd Lightning Network node implementation.
 type LNDclient struct {
 	lndClient lnrpc.LightningClient
 	ctx       context.Context
@@ -66,6 +68,37 @@ func (c LNDclient) CheckInvoice(preimageHex string) (bool, error) {
 	return true, nil
 }
 
+// Pay pays the invoice and returns the preimage (hex encoded) on success, or an error on failure.
+func (c LNDclient) Pay(invoice string) (string, error) {
+	// Decode payment request (a.k.a. invoice).
+	// TODO: Decoded values are only used for logging, so maybe make this optional to make fewer RPC calls
+	payReqString := lnrpc.PayReqString{
+		PayReq: invoice,
+	}
+	decodedPayReq, err := c.lndClient.DecodePayReq(c.ctx, &payReqString)
+	if err != nil {
+		return "", err
+	}
+
+	// Send payment
+	sendReq := lnrpc.SendRequest{
+		PaymentRequest: invoice,
+	}
+	stdOutLogger.Printf("Sending payment with %v Satoshis to %v (memo: \"%v\")",
+		decodedPayReq.NumSatoshis, decodedPayReq.Destination, decodedPayReq.Description)
+	sendRes, err := c.lndClient.SendPaymentSync(c.ctx, &sendReq)
+	if err != nil {
+		return "", err
+	}
+	// Even if err is nil, this just means the RPC call was successful, not the payment was successful
+	if sendRes.PaymentError != "" {
+		return "", errors.New(sendRes.PaymentError)
+	}
+
+	hexPreimage := hex.EncodeToString(sendRes.PaymentPreimage)
+	return string(hexPreimage), nil
+}
+
 // NewLNDclient creates a new LNDclient instance.
 func NewLNDclient(lndOptions LNDoptions) (LNDclient, error) {
 	result := LNDclient{}
@@ -111,7 +144,10 @@ type LNDoptions struct {
 	// Path to the "tls.cert" file that your LND node uses.
 	// Optional ("tls.cert" by default).
 	CertFile string
-	// Path to the "invoice.macaroon" file that your LND node uses.
+	// Path to the macaroon file that your LND node uses.
+	// "invoice.macaroon" if you only use the GenerateInvoice() and CheckInvoice() methods
+	// (required by the middleware in the package "wall").
+	// "admin.macaroon" if you use the Pay() method (required by the client in the package "pay").
 	// Optional ("invoice.macaroon" by default).
 	MacaroonFile string
 }

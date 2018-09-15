@@ -8,8 +8,15 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) a
 vNext
 -----
 
-- Added: Support for [c-lightning](https://github.com/ElementsProject/lightning) with [Lightning Charge](https://github.com/ElementsProject/lightning-charge)
+- Added: Support for [c-lightning](https://github.com/ElementsProject/lightning) with [Lightning Charge](https://github.com/ElementsProject/lightning-charge) (issue [#6](https://github.com/philippgille/ln-paywall/issues/6))
     - Note: The current implementation's performance decreases with the amount of invoices in the Lightning Charge server. This will be fixed in an upcoming release.
+- Added: Package `pay` (issue [#20](https://github.com/philippgille/ln-paywall/issues/20))
+    - Interface `pay.LNclient` - Abstraction of a Lightning Network node client for paying LN invoices. Enables developers to write their own implementations if the provided ones aren't enough.
+    - Struct `pay.Client` - Replacement for a standard Go `http.Client`
+        - Factory function `NewClient(httpClient *http.Client, lnClient LNclient) Client` - `httpClient` can be passed as `nil`, leading to `http.DefaultClient` being used
+        - Method `Do(req *http.Request) (*http.Response, error)` - Meant to be used as equivalent to the same Go `http.Client` method, but handles the Lightning Network payment in the background.
+    - Example client in `examples/client/main.go`
+- Added: Method `Pay(invoice string) (string, error)` for `ln.LNDclient` - Implements the new `pay.LNclient` interface, so that the `LNDclient` can be used as parameter in the `pay.NewClient(...)` function. (Issue [#20](https://github.com/philippgille/ln-paywall/issues/20))
 - Fixed: Some info logs were logged to stderr instead of stdout
 
 ### Breaking changes

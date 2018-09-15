@@ -13,6 +13,8 @@ Middlewares for:
 - [X] [Gin](https://github.com/gin-gonic/gin)
 - [X] [Echo](https://github.com/labstack/echo)
 
+A client package exists as well to make *consuming* LN-paywalled APIs extremely easy (you just use it like the standard Go `http.Client` and the payment handling is done in the background).
+
 An API gateway is on the roadmap as well, which you can use to monetize your API that's written in *any* language, not just in Go.
 
 Contents
@@ -22,7 +24,9 @@ Contents
 - [How it works](#how-it-works)
 - [Prerequisites](#prerequisites)
 - [Usage](#usage)
-    - [List of examples](#list-of-examples)
+	- [Middleware](#middleware)
+		- [List of examples](#list-of-examples)
+	- [Client](#client)
 - [Related projects](#related-projects)
 
 Purpose
@@ -85,14 +89,15 @@ There are currently two prerequisites:
 Usage
 -----
 
-[![GoDoc](http://www.godoc.org/github.com/philippgille/ln-paywall/wall?status.svg)](http://www.godoc.org/github.com/philippgille/ln-paywall/wall)
+[![GoDoc](http://www.godoc.org/github.com/philippgille/ln-paywall?status.svg)](http://www.godoc.org/github.com/philippgille/ln-paywall)
 
 Get the package with `go get -u github.com/philippgille/ln-paywall/...`.
 
 We strongly encourage you to use vendoring, because as long as `ln-paywall` is version `0.x`, breaking changes may be introduced in new versions, including changes to the package name / import path. The project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html) and all notable changes to this project are documented in [RELEASES.md](https://github.com/philippgille/ln-paywall/blob/master/RELEASES.md).
 
-The best way to see how to use `ln-paywall` is by example. In the below examples we create a web service that responds to requests to `/ping` with "pong", using Gin as the web framework.
+### Middleware
 
+The best way to see how to use `ln-paywall` is by example. In the below examples we create a web service that responds to requests to `/ping` with "pong", using Gin as the web framework.
 
 ```Go
 package main
@@ -130,7 +135,7 @@ func main() {
 
 This is just the most basic example. See the list of examples below for examples with other web frameworks / routers / just the stdlib, as well as for a more complex and useful example.
 
-### List of examples
+#### List of examples
 
 Follow the links to the example code files.
 
@@ -147,6 +152,56 @@ More complex and useful example:
 - [QR code generation API using Gin](examples/qr-code/main.go)
 	- Ready-to-use Docker image: [https://hub.docker.com/r/philippgille/qr-code/](https://hub.docker.com/r/philippgille/qr-code/)
 	- Try out the demo deployed on [https://lightning.ws](https://lightning.ws)
+
+### Client
+
+```Go
+package main
+
+import (
+	"flag"
+	"fmt"
+	"io/ioutil"
+	"net/http"
+
+	"github.com/philippgille/ln-paywall/ln"
+	"github.com/philippgille/ln-paywall/pay"
+)
+
+func main() {
+	flag.Parse()
+
+	// Set up client
+	lndOptions := ln.LNDoptions{ // Default address: "localhost:10009", CertFile: "tls.cert"
+		MacaroonFile: "admin.macaroon", // admin.macaroon is required for making payments
+	}
+	lnClient, err := ln.NewLNDclient(lndOptions)
+	if err != nil {
+		panic(err)
+	}
+	client := pay.NewClient(nil, lnClient) // Uses http.DefaultClient if no http.Client is passed
+
+	// Send request to an ln-paywalled API
+	req, err := http.NewRequest("GET", "http://localhost:8080/ping", nil)
+	if err != nil {
+		panic(err)
+	}
+	res, err := client.Do(req)
+	if err != nil {
+		panic(err)
+	}
+	defer res.Body.Close()
+
+	// Print response body
+	resBody, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println(string(resBody))
+}
+```
+
+You can also view this example [here](examples/client/main.go).
 
 Related Projects
 ----------------
