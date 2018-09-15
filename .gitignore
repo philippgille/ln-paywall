@@ -14,7 +14,7 @@
 ## Own
 
 # lnd connection files used for testing
-invoice.macaroon
+*.macaroon
 tls.cert
 
 # bbolt DB files that are created when testing with bbolt
