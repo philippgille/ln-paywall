@@ -15,7 +15,7 @@ type Invoice struct {
 	// The actual invoice string required by the payer in Bech32 encoding,
 	// see https://github.com/lightningnetwork/lightning-rfc/blob/master/11-payment-encoding.md
 	PaymentRequest string
-	// A.k.a. preimage hash.
+	// A.k.a. preimage hash, a.k.a. invoice ID. Hex encoded.
 	// Could be extracted from the PaymentRequest, but that would require additional
 	// dependencies during build time and additional computation during runtime,
 	// while all Lightning Node implementation clients already return the value directly

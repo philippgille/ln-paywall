@@ -1,7 +1,6 @@
 package wall
 
 import (
-	"encoding/hex"
 	"fmt"
 	"log"
 	"net/http"
@@ -37,12 +36,11 @@ func createHandlerFunc(invoiceOptions InvoiceOptions, lnClient LNclient, storage
 				http.Error(w, errorMsg, http.StatusInternalServerError)
 			} else {
 				// Cache the invoice metadata
-				invoiceID := hex.EncodeToString([]byte(invoice.PaymentHash))
 				metadata := invoiceMetaData{
 					Method: r.Method,
 					Path:   r.URL.Path,
 				}
-				storageClient.Set(invoiceID, metadata)
+				storageClient.Set(invoice.PaymentHash, metadata)
 
 				stdOutLogger.Printf("Sending invoice in response: %v", invoice)
 				// Note: w.Header().Set(...) must be called before w.WriteHeader(...)!

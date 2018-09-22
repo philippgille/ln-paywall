@@ -36,7 +36,7 @@ func (c LNDclient) GenerateInvoice(amount int64, memo string) (Invoice, error) {
 		return result, err
 	}
 
-	result.PaymentHash = string(res.RHash)
+	result.PaymentHash = hex.EncodeToString(res.RHash)
 	result.PaymentRequest = res.PaymentRequest
 	return result, nil
 }

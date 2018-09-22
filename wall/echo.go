@@ -1,7 +1,6 @@
 package wall
 
 import (
-	"encoding/hex"
 	"fmt"
 	"log"
 	"net/http"
@@ -39,12 +38,11 @@ func NewEchoMiddleware(invoiceOptions InvoiceOptions, lnClient LNclient, storage
 				}
 
 				// Cache the invoice metadata
-				invoiceID := hex.EncodeToString([]byte(invoice.PaymentHash))
 				metadata := invoiceMetaData{
 					Method: ctx.Request().Method,
 					Path:   ctx.Request().URL.Path,
 				}
-				storageClient.Set(invoiceID, metadata)
+				storageClient.Set(invoice.PaymentHash, metadata)
 
 				stdOutLogger.Printf("Sending invoice in response: %v", invoice)
 				ctx.Response().Header().Set("Content-Type", "application/vnd.lightning.bolt11")
