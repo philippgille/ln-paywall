@@ -9,25 +9,35 @@ type RedisClient struct {
 	c *redis.Client
 }
 
-// WasUsed checks if the preimage was used for a previous payment already.
-func (c RedisClient) WasUsed(preimage string) (bool, error) {
-	_, err := c.c.Get(preimage).Result()
-	if err == redis.Nil {
-		return false, nil
-	} else if err != nil {
-		return false, err
-	} else {
-		return true, nil
+// Set stores the given object for the given key.
+func (c RedisClient) Set(k string, v interface{}) error {
+	// First turn the passed object into something that Redis can handle
+	// (the Set method takes an interface{}, but the Get method only returns a string,
+	// so it can be assumed that the interface{} parameter type is only for convenience
+	// for a couple of builtin types like int etc.).
+	data, err := toJSON(v)
+	if err != nil {
+		return err
 	}
-}
 
-// SetUsed stores the information that a preimage has been used for a payment.
-func (c RedisClient) SetUsed(preimage string) error {
-	err := c.c.Set(preimage, true, 0).Err()
+	err = c.c.Set(k, string(data), 0).Err()
 	if err != nil {
 		return err
 	}
 	return nil
+}
+
+// Get retrieves the object for the given key and points the passed pointer to it.
+func (c RedisClient) Get(k string, v interface{}) (bool, error) {
+	data, err := c.c.Get(k).Result()
+	if err != nil {
+		if err == redis.Nil {
+			return false, nil
+		}
+		return false, err
+	}
+
+	return true, fromJSON([]byte(data), v)
 }
 
 // RedisOptions are the options for the Redis DB.

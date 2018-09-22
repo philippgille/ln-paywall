@@ -19,7 +19,9 @@ type ChargeClient struct {
 }
 
 // GenerateInvoice generates an invoice with the given price and memo.
-func (c ChargeClient) GenerateInvoice(amount int64, memo string) (string, error) {
+func (c ChargeClient) GenerateInvoice(amount int64, memo string) (Invoice, error) {
+	result := Invoice{}
+
 	data := make(url.Values)
 	// Possible values as documented in https://github.com/ElementsProject/lightning-charge/blob/master/README.md:
 	// msatoshi, currency, amount, description, expiry, metadata and webhook
@@ -31,31 +33,33 @@ func (c ChargeClient) GenerateInvoice(amount int64, memo string) (string, error)
 	// Send request
 	req, err := http.NewRequest("POST", c.baseURL+"/invoice", strings.NewReader(data.Encode()))
 	if err != nil {
-		return "", err
+		return result, err
 	}
 	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 	req.SetBasicAuth("api-token", c.apiToken) // This might seem strange, but it's how Lightning Charge expects it
 	stdOutLogger.Println("Creating invoice for a new API request")
 	res, err := c.client.Do(req)
 	if err != nil {
-		return "", err
+		return result, err
 	}
 
 	// Read and deserialize response
 	body, err := ioutil.ReadAll(res.Body)
 	if err != nil {
-		return "", err
+		return result, err
 	}
 	err = res.Body.Close()
 	if err != nil {
-		return "", err
+		return result, err
 	}
 	invoice, err := deserializeInvoice(body)
 	if err != nil {
-		return "", err
+		return result, err
 	}
 
-	return invoice.Payreq, nil
+	result.PaymentHash = invoice.Rhash
+	result.PaymentRequest = invoice.Payreq
+	return result, nil
 }
 
 // CheckInvoice takes a hex encoded preimage and checks if the corresponding invoice was settled.

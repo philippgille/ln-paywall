@@ -1,6 +1,7 @@
 package wall
 
 import (
+	"encoding/hex"
 	"fmt"
 	"log"
 	"net/http"
@@ -35,16 +36,24 @@ func createHandlerFunc(invoiceOptions InvoiceOptions, lnClient LNclient, storage
 				log.Println(errorMsg)
 				http.Error(w, errorMsg, http.StatusInternalServerError)
 			} else {
+				// Cache the invoice metadata
+				invoiceID := hex.EncodeToString([]byte(invoice.PaymentHash))
+				metadata := invoiceMetaData{
+					Method: r.Method,
+					Path:   r.URL.Path,
+				}
+				storageClient.Set(invoiceID, metadata)
+
 				stdOutLogger.Printf("Sending invoice in response: %v", invoice)
 				// Note: w.Header().Set(...) must be called before w.WriteHeader(...)!
 				w.Header().Set("Content-Type", "application/vnd.lightning.bolt11")
 				w.WriteHeader(http.StatusPaymentRequired)
 				// The actual invoice goes into the body
-				w.Write([]byte(invoice))
+				w.Write([]byte(invoice.PaymentRequest))
 			}
 		} else {
 			// Check if the provided preimage belongs to a settled API payment invoice and that it wasn't already used. Also store used preimages.
-			invalidPreimageMsg, err := handlePreimage(preimageHex, storageClient, lnClient)
+			invalidPreimageMsg, err := handlePreimage(r, storageClient, lnClient)
 			if err != nil {
 				errorMsg := fmt.Sprintf("An error occurred during checking the preimage: %+v", err)
 				log.Printf("%v\n", errorMsg)

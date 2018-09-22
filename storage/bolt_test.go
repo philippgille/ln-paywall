@@ -60,9 +60,17 @@ func TestBoltClientConcurrent(t *testing.T) {
 	waitGroup.Wait()
 
 	// Now make sure that all values are in the storage
-	expected := true
+	expected := foo{}
 	for i := 0; i < goroutineCount; i++ {
-		actual, _ := boltClient.WasUsed(strconv.Itoa(i))
+		actualPtr := new(foo)
+		found, err := boltClient.Get(strconv.Itoa(i), actualPtr)
+		if err != nil {
+			t.Errorf("An error occurred during the test: %v", err)
+		}
+		if !found {
+			t.Errorf("No value was found, but should have been")
+		}
+		actual := *actualPtr
 		if actual != expected {
 			t.Errorf("Expected: %v, but was: %v", expected, actual)
 		}

@@ -14,37 +14,47 @@ type BoltClient struct {
 	lock *sync.Mutex
 }
 
-// WasUsed checks if the preimage was used for a previous payment already.
-func (c BoltClient) WasUsed(preimage string) (bool, error) {
-	var result bool
-	err := c.db.View(func(tx *bolt.Tx) error {
-		b := tx.Bucket([]byte(bucketName))
-		v := b.Get([]byte(preimage))
-		if v != nil {
-			result = true
-		}
-		return nil
-	})
+// Set stores the given object for the given key.
+func (c BoltClient) Set(k string, v interface{}) error {
+	// First turn the passed object into something that Bolt can handle
+	data, err := toJSON(v)
 	if err != nil {
-		return false, err
+		return err
 	}
-	return result, nil
-}
 
-// SetUsed stores the information that a preimage has been used for a payment.
-func (c BoltClient) SetUsed(preimage string) error {
 	c.lock.Lock()
 	defer c.lock.Unlock()
 
-	err := c.db.Update(func(tx *bolt.Tx) error {
+	err = c.db.Update(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(bucketName))
-		err := b.Put([]byte(preimage), []byte("1"))
+		err := b.Put([]byte(k), data)
 		return err
 	})
 	if err != nil {
 		return err
 	}
 	return nil
+}
+
+// Get retrieves the stored object for the given key and populates the fields of the object that v points to
+// with the values of the retrieved object's values.
+func (c BoltClient) Get(k string, v interface{}) (bool, error) {
+	var data []byte
+	err := c.db.View(func(tx *bolt.Tx) error {
+		b := tx.Bucket([]byte(bucketName))
+		data = b.Get([]byte(k))
+		return nil
+	})
+	if err != nil {
+		return false, err
+	}
+
+	// If no value was found assign nil to the pointer
+	if data == nil {
+		return false, nil
+	}
+
+	return true, fromJSON(data, v)
 }
 
 // BoltOptions are the options for the BoltClient.
@@ -64,7 +74,7 @@ var DefaultBoltOptions = BoltOptions{
 // Note: Bolt uses an exclusive write lock on the database file so it cannot be shared by multiple processes.
 // This shouldn't be a problem when you use one file for one middleware, like this:
 //  // ...
-//  boltClient, err := wall.NewBoltClient(wall.DefaultBoltOptions) // Uses file "ln-paywall.db"
+//  boltClient, err := storage.NewBoltClient(storage.DefaultBoltOptions) // Uses file "ln-paywall.db"
 //  if err != nil {
 //      panic(err)
 //  }
