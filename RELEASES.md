@@ -17,6 +17,7 @@ vNext
         - Method `Do(req *http.Request) (*http.Response, error)` - Meant to be used as equivalent to the same Go `http.Client` method, but handles the Lightning Network payment in the background.
         - Method `Get(url string) (*http.Response, error)` - A convenience method for the `Do(...)` method, also an equivalent to the same Go `http.Client` method (regarding its usage)
     - Example client in `examples/client/main.go`
+    - > Note: Currently only `ln.LNDclient` can be used in the client, because Lightning Charge doesn't support sending payments (and maybe never will)
 - Added: Method `Pay(invoice string) (string, error)` for `ln.LNDclient` - Implements the new `pay.LNclient` interface, so that the `LNDclient` can be used as parameter in the `pay.NewClient(...)` function. (Issue [#20](https://github.com/philippgille/ln-paywall/issues/20))
 - Fixed: A client could cheat in multiple ways, for example use a preimage for a request to endpoint A while the invoice was for endpoint B, with B being cheaper than A. Or if the LN node is used for other purposes as well, a client could send any preimage that might be for a totally different invoice, not related to the API at all. (Issue [#16](https://github.com/philippgille/ln-paywall/issues/16))
 - Fixed: Some info logs were logged to `stderr` instead of `stdout`
