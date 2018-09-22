@@ -1,6 +1,7 @@
 package wall
 
 import (
+	"encoding/hex"
 	"fmt"
 	"log"
 	"net/http"
@@ -24,16 +25,24 @@ func NewGinMiddleware(invoiceOptions InvoiceOptions, lnClient LNclient, storageC
 				http.Error(ctx.Writer, errorMsg, http.StatusInternalServerError)
 				ctx.Abort()
 			} else {
+				// Cache the invoice metadata
+				invoiceID := hex.EncodeToString([]byte(invoice.PaymentHash))
+				metadata := invoiceMetaData{
+					Method: ctx.Request.Method,
+					Path:   ctx.Request.URL.Path,
+				}
+				storageClient.Set(invoiceID, metadata)
+
 				stdOutLogger.Printf("Sending invoice in response: %v", invoice)
 				ctx.Header("Content-Type", "application/vnd.lightning.bolt11")
 				ctx.Status(http.StatusPaymentRequired)
 				// The actual invoice goes into the body
-				ctx.Writer.Write([]byte(invoice))
+				ctx.Writer.Write([]byte(invoice.PaymentRequest))
 				ctx.Abort()
 			}
 		} else {
 			// Check if the provided preimage belongs to a settled API payment invoice and that it wasn't already used. Also store used preimages.
-			invalidPreimageMsg, err := handlePreimage(preimageHex, storageClient, lnClient)
+			invalidPreimageMsg, err := handlePreimage(ctx.Request, storageClient, lnClient)
 			if err != nil {
 				errorMsg := fmt.Sprintf("An error occurred during checking the preimage: %+v", err)
 				log.Printf("%v\n", errorMsg)

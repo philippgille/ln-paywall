@@ -9,17 +9,25 @@ type GoMap struct {
 	m *sync.Map
 }
 
-// WasUsed checks if the preimage was used for a previous payment already.
-func (m GoMap) WasUsed(preimage string) (bool, error) {
-	// We don't need the value. "ok" contains whether a value was found.
-	_, ok := m.m.Load(preimage)
-	return ok, nil
+// Set stores the given object for the given key.
+func (m GoMap) Set(k string, v interface{}) error {
+	data, err := toJSON(v)
+	if err != nil {
+		return err
+	}
+	m.m.Store(k, data)
+	return nil
 }
 
-// SetUsed stores the information that a preimage has been used for a payment.
-func (m GoMap) SetUsed(preimage string) error {
-	m.m.Store(preimage, true)
-	return nil
+// Get retrieves the stored object for the given key and populates the fields of the object that v points to
+// with the values of the retrieved object's values.
+func (m GoMap) Get(k string, v interface{}) (bool, error) {
+	data, found := m.m.Load(k)
+	if !found {
+		return false, nil
+	}
+
+	return true, fromJSON(data.([]byte), v)
 }
 
 // NewGoMap creates a new GoMap.

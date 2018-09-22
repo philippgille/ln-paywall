@@ -18,11 +18,14 @@ vNext
         - Method `Get(url string) (*http.Response, error)` - A convenience method for the `Do(...)` method, also an equivalent to the same Go `http.Client` method (regarding its usage)
     - Example client in `examples/client/main.go`
 - Added: Method `Pay(invoice string) (string, error)` for `ln.LNDclient` - Implements the new `pay.LNclient` interface, so that the `LNDclient` can be used as parameter in the `pay.NewClient(...)` function. (Issue [#20](https://github.com/philippgille/ln-paywall/issues/20))
-- Fixed: Some info logs were logged to stderr instead of stdout
+- Fixed: A client could cheat in multiple ways, for example use a preimage for a request to endpoint A while the invoice was for endpoint B, with B being cheaper than A. Or if the LN node is used for other purposes as well, a client could send any preimage that might be for a totally different invoice, not related to the API at all. (Issue [#16](https://github.com/philippgille/ln-paywall/issues/16))
+- Fixed: Some info logs were logged to `stderr` instead of `stdout`
 
 ### Breaking changes
 
 - Changed: The preimage in the `X-Preimage` header must now be hex encoded instead of Base64 encoded. The hex encoded representation is the typical representation, as used by "lncli listpayments", Eclair on Android and bolt11 payment request decoders like [https://lndecode.com](https://lndecode.com). Base64 was used previously because "lncli listinvoices" uses that encoding. (Issue [#8](https://github.com/philippgille/ln-paywall/issues/8))
+- Changed: Interface `wall.StorageClient` and thus all its implementations in the `storage` package were significantly changed. The methods are now completely independent of any ln-paywall specifics, with `Set(...)` and `Get(...)` just setting and retrieving any arbitrary `interface{}` to/from the storage. (Required for issue [#16](https://github.com/philippgille/ln-paywall/issues/16).)
+- Changed: The method `GenerateInvoice(int64, string) (string, error)` in the interface `wall.LNclient` was changed to return a `ln.Invoice` object, which makes it much easier to access the invoice ID (a.k.a. preimage hash, a.k.a. payment hash), instead of having to decode the invoice. (Useful for issue [#16](https://github.com/philippgille/ln-paywall/issues/16), in which the invoice ID is required as key in the storage.)
 
 v0.4.0 (2018-09-03)
 -------------------

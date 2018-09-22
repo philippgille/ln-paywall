@@ -22,7 +22,9 @@ type LNDclient struct {
 }
 
 // GenerateInvoice generates an invoice with the given price and memo.
-func (c LNDclient) GenerateInvoice(amount int64, memo string) (string, error) {
+func (c LNDclient) GenerateInvoice(amount int64, memo string) (Invoice, error) {
+	result := Invoice{}
+
 	// Create the request and send it
 	invoice := lnrpc.Invoice{
 		Memo:  memo,
@@ -31,10 +33,12 @@ func (c LNDclient) GenerateInvoice(amount int64, memo string) (string, error) {
 	stdOutLogger.Println("Creating invoice for a new API request")
 	res, err := c.lndClient.AddInvoice(c.ctx, &invoice)
 	if err != nil {
-		return "", err
+		return result, err
 	}
 
-	return res.GetPaymentRequest(), nil
+	result.PaymentHash = string(res.RHash)
+	result.PaymentRequest = res.PaymentRequest
+	return result, nil
 }
 
 // CheckInvoice takes a hex encoded preimage and checks if the corresponding invoice was settled.
