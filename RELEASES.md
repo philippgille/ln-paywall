@@ -8,6 +8,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) a
 vNext
 -----
 
+v0.5.0 (2018-09-24)
+-------------------
+
 - Added: Support for [c-lightning](https://github.com/ElementsProject/lightning) with [Lightning Charge](https://github.com/ElementsProject/lightning-charge) (issue [#6](https://github.com/philippgille/ln-paywall/issues/6))
     - Note: The current implementation's performance decreases with the amount of invoices in the Lightning Charge server. This will be fixed in an upcoming release.
 - Added: Package `pay` (issue [#20](https://github.com/philippgille/ln-paywall/issues/20))
