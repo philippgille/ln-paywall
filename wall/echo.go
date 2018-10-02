@@ -45,7 +45,7 @@ func NewEchoMiddleware(invoiceOptions InvoiceOptions, lnClient LNclient, storage
 				}
 				storageClient.Set(invoice.PaymentHash, metadata)
 
-				stdOutLogger.Printf("Sending invoice in response: %v", invoice)
+				stdOutLogger.Printf("Sending invoice in response: %v", invoice.PaymentRequest)
 				ctx.Response().Header().Set("Content-Type", "application/vnd.lightning.bolt11")
 				ctx.Response().Status = http.StatusPaymentRequired
 				// The actual invoice goes into the body

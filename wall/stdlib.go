@@ -43,7 +43,7 @@ func createHandlerFunc(invoiceOptions InvoiceOptions, lnClient LNclient, storage
 				}
 				storageClient.Set(invoice.PaymentHash, metadata)
 
-				stdOutLogger.Printf("Sending invoice in response: %v", invoice)
+				stdOutLogger.Printf("Sending invoice in response: %v", invoice.PaymentRequest)
 				// Note: w.Header().Set(...) must be called before w.WriteHeader(...)!
 				w.Header().Set("Content-Type", "application/vnd.lightning.bolt11")
 				w.WriteHeader(http.StatusPaymentRequired)

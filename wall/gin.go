@@ -32,7 +32,7 @@ func NewGinMiddleware(invoiceOptions InvoiceOptions, lnClient LNclient, storageC
 				}
 				storageClient.Set(invoice.PaymentHash, metadata)
 
-				stdOutLogger.Printf("Sending invoice in response: %v", invoice)
+				stdOutLogger.Printf("Sending invoice in response: %v", invoice.PaymentRequest)
 				ctx.Header("Content-Type", "application/vnd.lightning.bolt11")
 				ctx.Status(http.StatusPaymentRequired)
 				// The actual invoice goes into the body
