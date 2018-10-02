@@ -8,11 +8,20 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) a
 vNext
 -----
 
+- Fixed: Performance decreased when using Lightning Charge and the amount of invoices in the Lightning Charge server increased (issue [#28](https://github.com/philippgille/ln-paywall/issues/28))
+
+### Breaking changes
+
+> Note: The following breaking changes don't affect normal users of the package, but only those who use their own implementations of our interfaces.
+
+- Changed: The struct `ln.Invoice` now has a field `ImplDepID string` which is required by the middlewares. It's an LN node implementation dependent ID (e.g. payment hash for lnd, some random string for Lightning Charge). (Required for issue [#28](https://github.com/philippgille/ln-paywall/issues/28).)
+- Changed: `wall.LNclient` now requires the method `CheckInvoice(string) (bool, error)` to accept the LN node implementation dependent ID instead of the preimage hash as parameter. (Required for issue [#28](https://github.com/philippgille/ln-paywall/issues/28).)
+
 v0.5.0 (2018-09-24)
 -------------------
 
 - Added: Support for [c-lightning](https://github.com/ElementsProject/lightning) with [Lightning Charge](https://github.com/ElementsProject/lightning-charge) (issue [#6](https://github.com/philippgille/ln-paywall/issues/6))
-    - Note: The current implementation's performance decreases with the amount of invoices in the Lightning Charge server. This will be fixed in an upcoming release.
+    - Note: The current implementation's performance decreases when the amount of invoices in the Lightning Charge server increases. This will be fixed in an upcoming release.
 - Added: Package `pay` (issue [#20](https://github.com/philippgille/ln-paywall/issues/20))
     - Interface `pay.LNclient` - Abstraction of a Lightning Network node client for paying LN invoices. Enables developers to write their own implementations if the provided ones aren't enough.
     - Struct `pay.Client` - Replacement for a standard Go `http.Client`
@@ -29,7 +38,7 @@ v0.5.0 (2018-09-24)
 
 - Changed: The preimage in the `X-Preimage` header must now be hex encoded instead of Base64 encoded. The hex encoded representation is the typical representation, as used by "lncli listpayments", Eclair on Android and bolt11 payment request decoders like [https://lndecode.com](https://lndecode.com). Base64 was used previously because "lncli listinvoices" uses that encoding. (Issue [#8](https://github.com/philippgille/ln-paywall/issues/8))
 - Changed: Interface `wall.StorageClient` and thus all its implementations in the `storage` package were significantly changed. The methods are now completely independent of any ln-paywall specifics, with `Set(...)` and `Get(...)` just setting and retrieving any arbitrary `interface{}` to/from the storage. (Required for issue [#16](https://github.com/philippgille/ln-paywall/issues/16).)
-- Changed: The method `GenerateInvoice(int64, string) (string, error)` in the interface `wall.LNclient` was changed to return a `ln.Invoice` object, which makes it much easier to access the invoice ID (a.k.a. preimage hash, a.k.a. payment hash), instead of having to decode the invoice. (Useful for issue [#16](https://github.com/philippgille/ln-paywall/issues/16), in which the invoice ID is required as key in the storage.)
+- Changed: The method `GenerateInvoice(int64, string) (string, error)` in the interface `wall.LNclient` was changed to return a `ln.Invoice` object, which makes it much easier to access the preimage hash (a.k.a. payment hash), instead of having to decode the invoice. (Useful for issue [#16](https://github.com/philippgille/ln-paywall/issues/16), in which the preimage hash is required as key in the storage.)
 
 v0.4.0 (2018-09-03)
 -------------------

@@ -36,29 +36,29 @@ func (c LNDclient) GenerateInvoice(amount int64, memo string) (Invoice, error) {
 		return result, err
 	}
 
-	result.PaymentHash = hex.EncodeToString(res.RHash)
+	result.ImplDepID = hex.EncodeToString(res.RHash)
+	result.PaymentHash = result.ImplDepID
 	result.PaymentRequest = res.PaymentRequest
 	return result, nil
 }
 
-// CheckInvoice takes a hex encoded preimage and checks if the corresponding invoice was settled.
-// An error is returned if the preimage isn't properly encoded or if no corresponding invoice was found.
+// CheckInvoice takes an invoice ID (LN node implementation specific) and checks if the corresponding invoice was settled.
+// An error is returned if no corresponding invoice was found.
 // False is returned if the invoice isn't settled.
-func (c LNDclient) CheckInvoice(preimageHex string) (bool, error) {
-	preimageHashHex, err := HashPreimage(preimageHex)
+func (c LNDclient) CheckInvoice(id string) (bool, error) {
+	// In the case of lnd, the ID is the hex encoded preimage hash.
+	plainHash, err := hex.DecodeString(id)
 	if err != nil {
 		return false, err
 	}
-	// Ignore the error because the reverse (encoding) was just done previously, so this must work
-	plainHash, _ := hex.DecodeString(preimageHashHex)
 
-	stdOutLogger.Printf("Checking invoice for hash %v\n", preimageHashHex)
+	stdOutLogger.Printf("Checking invoice for hash %v\n", id)
 
 	// Get the invoice for that hash
 	paymentHash := lnrpc.PaymentHash{
 		RHash: plainHash,
 		// Hex encoded, must be exactly 32 byte
-		RHashStr: preimageHashHex,
+		RHashStr: id,
 	}
 	invoice, err := c.lndClient.LookupInvoice(c.ctx, &paymentHash)
 	if err != nil {

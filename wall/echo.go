@@ -39,8 +39,9 @@ func NewEchoMiddleware(invoiceOptions InvoiceOptions, lnClient LNclient, storage
 
 				// Cache the invoice metadata
 				metadata := invoiceMetaData{
-					Method: ctx.Request().Method,
-					Path:   ctx.Request().URL.Path,
+					ImplDepID: invoice.ImplDepID,
+					Method:    ctx.Request().Method,
+					Path:      ctx.Request().URL.Path,
 				}
 				storageClient.Set(invoice.PaymentHash, metadata)
 
