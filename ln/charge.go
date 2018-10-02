@@ -57,33 +57,20 @@ func (c ChargeClient) GenerateInvoice(amount int64, memo string) (Invoice, error
 		return result, err
 	}
 
+	result.ImplDepID = invoice.ID
 	result.PaymentHash = invoice.Rhash
 	result.PaymentRequest = invoice.Payreq
 	return result, nil
 }
 
-// CheckInvoice takes a hex encoded preimage and checks if the corresponding invoice was settled.
-// This is done by fetching ALL invoices (for reasons outlined below) and looking for a matching preimage hash,
-// then checking if the found invoice was settled.
-// An error is returned if the preimage isn't properly encoded or if no corresponding invoice was found.
+// CheckInvoice takes an invoice ID (LN node implementation specific) and checks if the corresponding invoice was settled.
+// An error is returned if the invoice info couldn't be fetched from Lightning Charge or deserialized etc.
 // False is returned if the invoice isn't settled.
-//
-// Implementation notes: Lightning Charge doesn't allow to fetch an invoice via a preimage or preimage hash,
-// which is fine by itself, but doesn't fit our implementation, which was focused on lnd at first
-// (which allows to fetch invoices via preimage hash).
-// In the future, for multiple reasons (for example GitHub issue #16),
-// the client won't send the preimage anymore but just a token,
-// similar to or the same as with ElementProject's paypercall.
-func (c ChargeClient) CheckInvoice(preimageHex string) (bool, error) {
-	preimageHashHex, err := HashPreimage(preimageHex)
-	if err != nil {
-		return false, err
-	}
+func (c ChargeClient) CheckInvoice(id string) (bool, error) {
+	stdOutLogger.Printf("Checking invoice %v\n", id)
 
-	stdOutLogger.Printf("Checking invoice for hash %v\n", preimageHashHex)
-
-	// Fetch all existing invoices
-	req, err := http.NewRequest("GET", c.baseURL+"/invoices", nil)
+	// Fetch invoice
+	req, err := http.NewRequest("GET", c.baseURL+"/invoice/"+id, nil)
 	if err != nil {
 		return false, err
 	}
@@ -93,7 +80,7 @@ func (c ChargeClient) CheckInvoice(preimageHex string) (bool, error) {
 		return false, err
 	}
 
-	invoicesJSON, err := ioutil.ReadAll(res.Body)
+	invoiceJSON, err := ioutil.ReadAll(res.Body)
 	if err != nil {
 		return false, err
 	}
@@ -102,29 +89,14 @@ func (c ChargeClient) CheckInvoice(preimageHex string) (bool, error) {
 		return false, err
 	}
 
-	invoices, err := deserializeInvoices(invoicesJSON)
+	invoice, err := deserializeInvoice(invoiceJSON)
 	if err != nil {
 		return false, err
 	}
 
-	// Iterate through them and find the one which the request's preimage is for
-	var foundInvoice chargeInvoice
-	for _, invoice := range invoices {
-		if invoice.Rhash == preimageHashHex {
-			foundInvoice = invoice
-		}
-	}
-	if foundInvoice.ID == "" {
-		// For this error the string "unable to locate invoice" MUST be used.
-		// This is a workaround until wall.handlePreimage() doesn't rely on that error string anymore.
-		// TODO: Improve
-		return false, errors.New("unable to locate invoice")
-	}
-
-	// An invoice was found, now check if it was settled
-	if foundInvoice.Status == "unpaid" {
+	if invoice.Status == "unpaid" {
 		return false, nil
-	} else if foundInvoice.Status == "paid" {
+	} else if invoice.Status == "paid" {
 		// All checks for errors are done, return ok
 		return true, nil
 	} else {
@@ -206,17 +178,6 @@ type chargeInvoice struct {
 func deserializeInvoice(invoiceJSON []byte) (chargeInvoice, error) {
 	result := chargeInvoice{}
 	err := json.Unmarshal(invoiceJSON, &result)
-	if err != nil {
-		return result, err
-	}
-	return result, nil
-}
-
-// deserializeInvoices converts an invoice JSON array of multiple invoices to a slice of instances of the chargeInvoice struct
-func deserializeInvoices(invoicesJSON []byte) ([]chargeInvoice, error) {
-	invoiceCountHeuristic := len(invoicesJSON) / 600 // Assuming one byte equals one character, and 600 characters per invoice
-	result := make([]chargeInvoice, invoiceCountHeuristic)
-	err := json.Unmarshal(invoicesJSON, &result)
 	if err != nil {
 		return result, err
 	}

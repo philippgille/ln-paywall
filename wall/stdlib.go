@@ -37,8 +37,9 @@ func createHandlerFunc(invoiceOptions InvoiceOptions, lnClient LNclient, storage
 			} else {
 				// Cache the invoice metadata
 				metadata := invoiceMetaData{
-					Method: r.Method,
-					Path:   r.URL.Path,
+					ImplDepID: invoice.ImplDepID,
+					Method:    r.Method,
+					Path:      r.URL.Path,
 				}
 				storageClient.Set(invoice.PaymentHash, metadata)
 
