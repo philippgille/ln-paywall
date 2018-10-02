@@ -8,6 +8,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) a
 vNext
 -----
 
+v0.5.1 (2018-10-02)
+-------------------
+
 - Fixed: Performance decreased when using Lightning Charge and the amount of invoices in the Lightning Charge server increased (issue [#28](https://github.com/philippgille/ln-paywall/issues/28))
 - Fixed: Since the introduction of the `ln.Invoice` struct the whole struct was logged instead of just the invoice string
 
