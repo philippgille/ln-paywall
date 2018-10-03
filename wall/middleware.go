@@ -2,6 +2,7 @@ package wall
 
 import (
 	"encoding/hex"
+	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -75,6 +76,58 @@ type invoiceMetaData struct {
 	Method    string
 	Path      string
 	Used      bool
+}
+
+type frameworkAbstraction interface {
+	getPreimageFromHeader() string
+	respondWithError(string, int)
+	getHTTPrequest() *http.Request
+	sendResponse(map[string]string, int, []byte)
+	next()
+}
+
+func commonHandler(fa frameworkAbstraction, invoiceOptions InvoiceOptions, lnClient LNclient, storageClient StorageClient) {
+	// Check if the request contains a header with the preimage that we need to check if the requester paid
+	preimageHex := fa.getPreimageFromHeader()
+	if preimageHex == "" {
+		// Generate the invoice
+		invoice, err := lnClient.GenerateInvoice(invoiceOptions.Price, invoiceOptions.Memo)
+		if err != nil {
+			errorMsg := fmt.Sprintf("Couldn't generate invoice: %+v", err)
+			log.Println(errorMsg)
+			fa.respondWithError(errorMsg, http.StatusInternalServerError)
+		} else {
+			// Cache the invoice metadata
+			metadata := invoiceMetaData{
+				ImplDepID: invoice.ImplDepID,
+				Method:    fa.getHTTPrequest().Method,
+				Path:      fa.getHTTPrequest().URL.Path,
+			}
+			storageClient.Set(invoice.PaymentHash, metadata)
+
+			stdOutLogger.Printf("Sending invoice in response: %v", invoice.PaymentRequest)
+			headers := make(map[string]string)
+			headers["Content-Type"] = "application/vnd.lightning.bolt11"
+			fa.sendResponse(headers, http.StatusPaymentRequired, []byte(invoice.PaymentRequest))
+		}
+	} else {
+		// Check if the provided preimage belongs to a settled API payment invoice and that it wasn't already used. Also store used preimages.
+		invalidPreimageMsg, err := handlePreimage(fa.getHTTPrequest(), storageClient, lnClient)
+		if err != nil {
+			errorMsg := fmt.Sprintf("An error occurred during checking the preimage: %+v", err)
+			log.Printf("%v\n", errorMsg)
+			fa.respondWithError(errorMsg, http.StatusInternalServerError)
+		} else if invalidPreimageMsg != "" {
+			log.Printf("%v: %v\n", invalidPreimageMsg, preimageHex)
+			fa.respondWithError(invalidPreimageMsg, http.StatusBadRequest)
+		} else {
+			preimageHash, err := ln.HashPreimage(preimageHex)
+			if err == nil {
+				stdOutLogger.Printf("The provided preimage is valid. Continuing to the next handler. Preimage hash: %v\n", preimageHash)
+			}
+			fa.next()
+		}
+	}
 }
 
 // handlePreimage does the following:
