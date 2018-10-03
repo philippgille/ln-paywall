@@ -40,15 +40,16 @@ func (fa stdlibHTTP) getPreimageFromHeader() string {
 	return fa.r.Header.Get("x-preimage")
 }
 
-func (fa stdlibHTTP) respondWithError(errorMsg string, statusCode int) {
+func (fa stdlibHTTP) respondWithError(err error, errorMsg string, statusCode int) error {
 	http.Error(fa.w, errorMsg, statusCode)
+	return nil
 }
 
 func (fa stdlibHTTP) getHTTPrequest() *http.Request {
 	return fa.r
 }
 
-func (fa stdlibHTTP) sendResponse(headers map[string]string, statusCode int, body []byte) {
+func (fa stdlibHTTP) respondWithInvoice(headers map[string]string, statusCode int, body []byte) error {
 	// Note: w.Header().Set(...) must be called before w.WriteHeader(...)!
 	for k, v := range headers {
 		fa.w.Header().Set(k, v)
@@ -57,8 +58,11 @@ func (fa stdlibHTTP) sendResponse(headers map[string]string, statusCode int, bod
 	fa.w.WriteHeader(statusCode)
 	// The actual invoice goes into the body
 	fa.w.Write(body)
+
+	return nil
 }
 
-func (fa stdlibHTTP) next() {
+func (fa stdlibHTTP) next() error {
 	fa.nextHandler.ServeHTTP(fa.w, fa.r)
+	return nil
 }

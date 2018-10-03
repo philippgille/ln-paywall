@@ -1,14 +1,10 @@
 package wall
 
 import (
-	"fmt"
-	"log"
 	"net/http"
 
 	"github.com/labstack/echo"
 	"github.com/labstack/echo/middleware"
-
-	"github.com/philippgille/ln-paywall/ln"
 )
 
 // NewEchoMiddleware returns an Echo middleware in the form of an echo.MiddlewareFunc.
@@ -22,63 +18,49 @@ func NewEchoMiddleware(invoiceOptions InvoiceOptions, lnClient LNclient, storage
 			if skipper(ctx) {
 				return next(ctx)
 			}
-			// Check if the request contains a header with the preimage that we need to check if the requester paid
-			preimageHex := ctx.Request().Header.Get("x-preimage")
-			if preimageHex == "" {
-				// Generate the invoice
-				invoice, err := lnClient.GenerateInvoice(invoiceOptions.Price, invoiceOptions.Memo)
-				if err != nil {
-					errorMsg := fmt.Sprintf("Couldn't generate invoice: %+v", err)
-					log.Println(errorMsg)
-					return &echo.HTTPError{
-						Code:     http.StatusInternalServerError,
-						Message:  errorMsg,
-						Internal: err,
-					}
-				}
-
-				// Cache the invoice metadata
-				metadata := invoiceMetaData{
-					ImplDepID: invoice.ImplDepID,
-					Method:    ctx.Request().Method,
-					Path:      ctx.Request().URL.Path,
-				}
-				storageClient.Set(invoice.PaymentHash, metadata)
-
-				stdOutLogger.Printf("Sending invoice in response: %v", invoice.PaymentRequest)
-				ctx.Response().Header().Set("Content-Type", "application/vnd.lightning.bolt11")
-				ctx.Response().Status = http.StatusPaymentRequired
-				// The actual invoice goes into the body
-				ctx.Response().Write([]byte(invoice.PaymentRequest))
-				return &echo.HTTPError{
-					Code:    http.StatusPaymentRequired,
-					Message: invoice,
-				}
+			fa := echoAbstraction{
+				ctx:         ctx,
+				nextHandler: next,
 			}
-			// Check if the provided preimage belongs to a settled API payment invoice and that it wasn't already used. Also store used preimages.
-			invalidPreimageMsg, err := handlePreimage(ctx.Request(), storageClient, lnClient)
-			if err != nil {
-				errorMsg := fmt.Sprintf("An error occurred during checking the preimage: %+v", err)
-				log.Printf("%v\n", errorMsg)
-				return &echo.HTTPError{
-					Code:     http.StatusInternalServerError,
-					Message:  errorMsg,
-					Internal: err,
-				}
-			} else if invalidPreimageMsg != "" {
-				log.Printf("%v: %v\n", invalidPreimageMsg, preimageHex)
-				return &echo.HTTPError{
-					Code:     http.StatusBadRequest,
-					Message:  invalidPreimageMsg,
-					Internal: err,
-				}
-			} else {
-				preimageHash, err := ln.HashPreimage(preimageHex)
-				if err == nil {
-					stdOutLogger.Printf("The provided preimage is valid. Continuing to the next HandlerFunc. Preimage hash: %v\n", preimageHash)
-				}
-			}
-			return next(ctx)
+			return commonHandler(fa, invoiceOptions, lnClient, storageClient)
 		}
 	}
+}
+
+type echoAbstraction struct {
+	ctx         echo.Context
+	nextHandler echo.HandlerFunc
+}
+
+func (fa echoAbstraction) getPreimageFromHeader() string {
+	return fa.ctx.Request().Header.Get("x-preimage")
+}
+
+func (fa echoAbstraction) respondWithError(err error, errorMsg string, statusCode int) error {
+	return &echo.HTTPError{
+		Code:     statusCode,
+		Message:  errorMsg,
+		Internal: err,
+	}
+}
+
+func (fa echoAbstraction) getHTTPrequest() *http.Request {
+	return fa.ctx.Request()
+}
+
+func (fa echoAbstraction) respondWithInvoice(headers map[string]string, statusCode int, body []byte) error {
+	for k, v := range headers {
+		fa.ctx.Response().Header().Set(k, v)
+	}
+	fa.ctx.Response().Status = statusCode
+	// The actual invoice goes into the body
+	fa.ctx.Response().Write(body)
+	return &echo.HTTPError{
+		Code:    statusCode,
+		Message: string(body),
+	}
+}
+
+func (fa echoAbstraction) next() error {
+	return fa.nextHandler(fa.ctx)
 }

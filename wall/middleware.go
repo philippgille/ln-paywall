@@ -80,13 +80,13 @@ type invoiceMetaData struct {
 
 type frameworkAbstraction interface {
 	getPreimageFromHeader() string
-	respondWithError(string, int)
+	respondWithError(error, string, int) error
 	getHTTPrequest() *http.Request
-	sendResponse(map[string]string, int, []byte)
-	next()
+	respondWithInvoice(map[string]string, int, []byte) error
+	next() error
 }
 
-func commonHandler(fa frameworkAbstraction, invoiceOptions InvoiceOptions, lnClient LNclient, storageClient StorageClient) {
+func commonHandler(fa frameworkAbstraction, invoiceOptions InvoiceOptions, lnClient LNclient, storageClient StorageClient) error {
 	// Check if the request contains a header with the preimage that we need to check if the requester paid
 	preimageHex := fa.getPreimageFromHeader()
 	if preimageHex == "" {
@@ -95,7 +95,10 @@ func commonHandler(fa frameworkAbstraction, invoiceOptions InvoiceOptions, lnCli
 		if err != nil {
 			errorMsg := fmt.Sprintf("Couldn't generate invoice: %+v", err)
 			log.Println(errorMsg)
-			fa.respondWithError(errorMsg, http.StatusInternalServerError)
+			err := fa.respondWithError(err, errorMsg, http.StatusInternalServerError)
+			if err != nil {
+				return err
+			}
 		} else {
 			// Cache the invoice metadata
 			metadata := invoiceMetaData{
@@ -108,7 +111,10 @@ func commonHandler(fa frameworkAbstraction, invoiceOptions InvoiceOptions, lnCli
 			stdOutLogger.Printf("Sending invoice in response: %v", invoice.PaymentRequest)
 			headers := make(map[string]string)
 			headers["Content-Type"] = "application/vnd.lightning.bolt11"
-			fa.sendResponse(headers, http.StatusPaymentRequired, []byte(invoice.PaymentRequest))
+			err := fa.respondWithInvoice(headers, http.StatusPaymentRequired, []byte(invoice.PaymentRequest))
+			if err != nil {
+				return err
+			}
 		}
 	} else {
 		// Check if the provided preimage belongs to a settled API payment invoice and that it wasn't already used. Also store used preimages.
@@ -116,18 +122,28 @@ func commonHandler(fa frameworkAbstraction, invoiceOptions InvoiceOptions, lnCli
 		if err != nil {
 			errorMsg := fmt.Sprintf("An error occurred during checking the preimage: %+v", err)
 			log.Printf("%v\n", errorMsg)
-			fa.respondWithError(errorMsg, http.StatusInternalServerError)
+			err := fa.respondWithError(err, errorMsg, http.StatusInternalServerError)
+			if err != nil {
+				return err
+			}
 		} else if invalidPreimageMsg != "" {
 			log.Printf("%v: %v\n", invalidPreimageMsg, preimageHex)
-			fa.respondWithError(invalidPreimageMsg, http.StatusBadRequest)
+			err := fa.respondWithError(nil, invalidPreimageMsg, http.StatusBadRequest)
+			if err != nil {
+				return err
+			}
 		} else {
 			preimageHash, err := ln.HashPreimage(preimageHex)
 			if err == nil {
 				stdOutLogger.Printf("The provided preimage is valid. Continuing to the next handler. Preimage hash: %v\n", preimageHash)
 			}
-			fa.next()
+			err = fa.next()
+			if err != nil {
+				return err
+			}
 		}
 	}
+	return nil
 }
 
 // handlePreimage does the following:
