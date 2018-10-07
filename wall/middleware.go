@@ -2,6 +2,7 @@ package wall
 
 import (
 	"encoding/hex"
+	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -75,6 +76,72 @@ type invoiceMetaData struct {
 	Method    string
 	Path      string
 	Used      bool
+}
+
+type frameworkAbstraction interface {
+	// getPreimageFromHeader returns the content of the "X-Preimage" header.
+	getPreimageFromHeader() string
+	// respondWithError sends a response with the given message and status code.
+	respondWithError(error, string, int)
+	// getHTTPrequest returns a pointer to the current http.Request.
+	getHTTPrequest() *http.Request
+	// respondWithInvoice sends a response with the given headers, status code and invoice string.
+	respondWithInvoice(map[string]string, int, []byte)
+	// next moves to the next handler, which might be another middleware or the actual request handler.
+	// This method is only called when all previous operations were successful (e.g. the invoice was paid properly).
+	// An error only needs to be returned if the specific web framework requires middlewares to return one,
+	// like Echo does for example.
+	next() error
+}
+
+func commonHandler(fa frameworkAbstraction, invoiceOptions InvoiceOptions, lnClient LNclient, storageClient StorageClient) error {
+	// Check if the request contains a header with the preimage that we need to check if the requester paid
+	preimageHex := fa.getPreimageFromHeader()
+	if preimageHex == "" {
+		// Generate the invoice
+		invoice, err := lnClient.GenerateInvoice(invoiceOptions.Price, invoiceOptions.Memo)
+		if err != nil {
+			errorMsg := fmt.Sprintf("Couldn't generate invoice: %+v", err)
+			log.Println(errorMsg)
+			fa.respondWithError(err, errorMsg, http.StatusInternalServerError)
+		} else {
+			// Cache the invoice metadata
+			metadata := invoiceMetaData{
+				ImplDepID: invoice.ImplDepID,
+				Method:    fa.getHTTPrequest().Method,
+				Path:      fa.getHTTPrequest().URL.Path,
+			}
+			storageClient.Set(invoice.PaymentHash, metadata)
+
+			// Respond with the invoice
+			stdOutLogger.Printf("Sending invoice in response: %v", invoice.PaymentRequest)
+			headers := make(map[string]string)
+			headers["Content-Type"] = "application/vnd.lightning.bolt11"
+			fa.respondWithInvoice(headers, http.StatusPaymentRequired, []byte(invoice.PaymentRequest))
+		}
+	} else {
+		// Check if the provided preimage belongs to a settled API payment invoice and that it wasn't already used. Also store used preimages.
+		invalidPreimageMsg, err := handlePreimage(fa.getHTTPrequest(), storageClient, lnClient)
+		if err != nil {
+			errorMsg := fmt.Sprintf("An error occurred during checking the preimage: %+v", err)
+			log.Printf("%v\n", errorMsg)
+			fa.respondWithError(err, errorMsg, http.StatusInternalServerError)
+		} else if invalidPreimageMsg != "" {
+			log.Printf("%v: %v\n", invalidPreimageMsg, preimageHex)
+			fa.respondWithError(nil, invalidPreimageMsg, http.StatusBadRequest)
+		} else {
+			// The preimage was valid (has a corresponding + settled invoice, wasn't used before etc.). Continue to next handler.
+			preimageHash, err := ln.HashPreimage(preimageHex)
+			if err == nil {
+				stdOutLogger.Printf("The provided preimage is valid. Continuing to the next handler. Preimage hash: %v\n", preimageHash)
+			}
+			err = fa.next()
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
 }
 
 // handlePreimage does the following:
