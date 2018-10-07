@@ -72,16 +72,23 @@ var DefaultBoltOptions = BoltOptions{
 
 // NewBoltClient creates a new BoltClient.
 // Note: Bolt uses an exclusive write lock on the database file so it cannot be shared by multiple processes.
-// This shouldn't be a problem when you use one file for one middleware, like this:
+// For preventing clients from cheating (reusing preimages across different endpoints / middlewares that use
+// different Bolt DB files) and for the previous mentioned reason you should use only one BoltClient.
+// For example:
 //  // ...
-//  boltClient, err := storage.NewBoltClient(storage.DefaultBoltOptions) // Uses file "ln-paywall.db"
+//  storageClient, err := storage.NewBoltClient(storage.DefaultBoltOptions) // Uses file "ln-paywall.db"
 //  if err != nil {
 //      panic(err)
 //  }
-//  defer boltClient.Close()
-//  r.Use(wall.NewGinMiddleware(invoiceOptions, lndOptions, boltClient))
+//  cheapPaywall := wall.NewGinMiddleware(cheapInvoiceOptions, lnClient, storageClient)
+//  expensivePaywall := wall.NewGinMiddleware(expensiveInvoiceOptions, lnClient, storageClient)
+//  router.GET("/ping", cheapPaywall, pingHandler)
+//  router.GET("/compute", expensivePaywall, computeHandler)
 //  // ...
-// Also don't worry about closing the Bolt DB, the middleware opens it once and uses it for the duration of its lifetime.
+// If you want to start an additional web service, this would be an additional process, so you can't use the same
+// DB file. You should look into the other storage options in this case, for example Redis.
+//
+// Don't worry about closing the Bolt DB, the middleware opens it once and uses it for the duration of its lifetime.
 // When the web service is stopped, the DB file lock is released automatically.
 func NewBoltClient(boltOptions BoltOptions) (BoltClient, error) {
 	result := BoltClient{}
