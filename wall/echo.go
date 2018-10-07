@@ -36,19 +36,19 @@ func (fa echoAbstraction) getPreimageFromHeader() string {
 	return fa.ctx.Request().Header.Get("x-preimage")
 }
 
-func (fa echoAbstraction) respondWithError(err error, errorMsg string, statusCode int) error {
-	return fa.ctx.String(statusCode, errorMsg)
+func (fa echoAbstraction) respondWithError(err error, errorMsg string, statusCode int) {
+	fa.ctx.String(statusCode, errorMsg)
 }
 
 func (fa echoAbstraction) getHTTPrequest() *http.Request {
 	return fa.ctx.Request()
 }
 
-func (fa echoAbstraction) respondWithInvoice(headers map[string]string, statusCode int, body []byte) error {
+func (fa echoAbstraction) respondWithInvoice(headers map[string]string, statusCode int, body []byte) {
 	for k, v := range headers {
 		fa.ctx.Response().Header().Set(k, v)
 	}
-	return fa.ctx.String(statusCode, string(body))
+	fa.ctx.String(statusCode, string(body))
 }
 
 func (fa echoAbstraction) next() error {

@@ -80,9 +80,9 @@ type invoiceMetaData struct {
 
 type frameworkAbstraction interface {
 	getPreimageFromHeader() string
-	respondWithError(error, string, int) error
+	respondWithError(error, string, int)
 	getHTTPrequest() *http.Request
-	respondWithInvoice(map[string]string, int, []byte) error
+	respondWithInvoice(map[string]string, int, []byte)
 	next() error
 }
 
@@ -95,10 +95,7 @@ func commonHandler(fa frameworkAbstraction, invoiceOptions InvoiceOptions, lnCli
 		if err != nil {
 			errorMsg := fmt.Sprintf("Couldn't generate invoice: %+v", err)
 			log.Println(errorMsg)
-			err := fa.respondWithError(err, errorMsg, http.StatusInternalServerError)
-			if err != nil {
-				return err
-			}
+			fa.respondWithError(err, errorMsg, http.StatusInternalServerError)
 		} else {
 			// Cache the invoice metadata
 			metadata := invoiceMetaData{
@@ -111,10 +108,7 @@ func commonHandler(fa frameworkAbstraction, invoiceOptions InvoiceOptions, lnCli
 			stdOutLogger.Printf("Sending invoice in response: %v", invoice.PaymentRequest)
 			headers := make(map[string]string)
 			headers["Content-Type"] = "application/vnd.lightning.bolt11"
-			err := fa.respondWithInvoice(headers, http.StatusPaymentRequired, []byte(invoice.PaymentRequest))
-			if err != nil {
-				return err
-			}
+			fa.respondWithInvoice(headers, http.StatusPaymentRequired, []byte(invoice.PaymentRequest))
 		}
 	} else {
 		// Check if the provided preimage belongs to a settled API payment invoice and that it wasn't already used. Also store used preimages.
@@ -122,16 +116,10 @@ func commonHandler(fa frameworkAbstraction, invoiceOptions InvoiceOptions, lnCli
 		if err != nil {
 			errorMsg := fmt.Sprintf("An error occurred during checking the preimage: %+v", err)
 			log.Printf("%v\n", errorMsg)
-			err := fa.respondWithError(err, errorMsg, http.StatusInternalServerError)
-			if err != nil {
-				return err
-			}
+			fa.respondWithError(err, errorMsg, http.StatusInternalServerError)
 		} else if invalidPreimageMsg != "" {
 			log.Printf("%v: %v\n", invalidPreimageMsg, preimageHex)
-			err := fa.respondWithError(nil, invalidPreimageMsg, http.StatusBadRequest)
-			if err != nil {
-				return err
-			}
+			fa.respondWithError(nil, invalidPreimageMsg, http.StatusBadRequest)
 		} else {
 			preimageHash, err := ln.HashPreimage(preimageHex)
 			if err == nil {

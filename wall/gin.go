@@ -25,17 +25,16 @@ func (fa ginAbstraction) getPreimageFromHeader() string {
 	return fa.ctx.GetHeader("x-preimage")
 }
 
-func (fa ginAbstraction) respondWithError(err error, errorMsg string, statusCode int) error {
+func (fa ginAbstraction) respondWithError(err error, errorMsg string, statusCode int) {
 	http.Error(fa.ctx.Writer, errorMsg, statusCode)
 	fa.ctx.Abort()
-	return nil
 }
 
 func (fa ginAbstraction) getHTTPrequest() *http.Request {
 	return fa.ctx.Request
 }
 
-func (fa ginAbstraction) respondWithInvoice(headers map[string]string, statusCode int, body []byte) error {
+func (fa ginAbstraction) respondWithInvoice(headers map[string]string, statusCode int, body []byte) {
 	for k, v := range headers {
 		fa.ctx.Header(k, v)
 	}
@@ -43,7 +42,6 @@ func (fa ginAbstraction) respondWithInvoice(headers map[string]string, statusCod
 	fa.ctx.Writer.Write(body)
 
 	fa.ctx.Abort()
-	return nil
 }
 
 func (fa ginAbstraction) next() error {
