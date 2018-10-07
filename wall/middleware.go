@@ -79,10 +79,18 @@ type invoiceMetaData struct {
 }
 
 type frameworkAbstraction interface {
+	// getPreimageFromHeader returns the content of the "X-Preimage" header.
 	getPreimageFromHeader() string
+	// respondWithError sends a response with the given message and status code.
 	respondWithError(error, string, int)
+	// getHTTPrequest returns a pointer to the current http.Request.
 	getHTTPrequest() *http.Request
+	// respondWithInvoice sends a response with the given headers, status code and invoice string.
 	respondWithInvoice(map[string]string, int, []byte)
+	// next moves to the next handler, which might be another middleware or the actual request handler.
+	// This method is only called when all previous operations were successful (e.g. the invoice was paid properly).
+	// An error only needs to be returned if the specific web framework requires middlewares to return one,
+	// like Echo does for example.
 	next() error
 }
 
@@ -105,6 +113,7 @@ func commonHandler(fa frameworkAbstraction, invoiceOptions InvoiceOptions, lnCli
 			}
 			storageClient.Set(invoice.PaymentHash, metadata)
 
+			// Respond with the invoice
 			stdOutLogger.Printf("Sending invoice in response: %v", invoice.PaymentRequest)
 			headers := make(map[string]string)
 			headers["Content-Type"] = "application/vnd.lightning.bolt11"
@@ -121,6 +130,7 @@ func commonHandler(fa frameworkAbstraction, invoiceOptions InvoiceOptions, lnCli
 			log.Printf("%v: %v\n", invalidPreimageMsg, preimageHex)
 			fa.respondWithError(nil, invalidPreimageMsg, http.StatusBadRequest)
 		} else {
+			// The preimage was valid (has a corresponding + settled invoice, wasn't used before etc.). Continue to next handler.
 			preimageHash, err := ln.HashPreimage(preimageHex)
 			if err == nil {
 				stdOutLogger.Printf("The provided preimage is valid. Continuing to the next handler. Preimage hash: %v\n", preimageHash)
