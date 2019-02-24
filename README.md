@@ -2,6 +2,7 @@ ln-paywall
 ==========
 
 [![GoDoc](http://www.godoc.org/github.com/philippgille/ln-paywall/wall?status.svg)](http://www.godoc.org/github.com/philippgille/ln-paywall/wall) [![Build Status](https://travis-ci.org/philippgille/ln-paywall.svg?branch=master)](https://travis-ci.org/philippgille/ln-paywall) [![Go Report Card](https://goreportcard.com/badge/github.com/philippgille/ln-paywall)](https://goreportcard.com/report/github.com/philippgille/ln-paywall) [![GitHub Releases](https://img.shields.io/github/release/philippgille/ln-paywall.svg)](https://github.com/philippgille/ln-paywall/releases)
+[![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Fphilippgille%2Fln-paywall.svg?type=shield)](https://app.fossa.io/projects/git%2Bgithub.com%2Fphilippgille%2Fln-paywall?ref=badge_shield)
 
 Go middleware for monetizing your API on a per-request basis with Bitcoin and Lightning ⚡️
 
@@ -211,3 +212,7 @@ Related Projects
 - [https://www.coinbee.io/](https://www.coinbee.io/)
 	- Paid service for Bitcoin paywalls (no Lightning)
 	- Looks like its meant for websites only, not APIs, because the browser session is involved
+
+
+## License
+[![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Fphilippgille%2Fln-paywall.svg?type=large)](https://app.fossa.io/projects/git%2Bgithub.com%2Fphilippgille%2Fln-paywall?ref=badge_large)
